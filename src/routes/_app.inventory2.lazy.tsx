@@ -5,8 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ChevronRight, Home, Pencil, Trash2, Plus, FolderOpen } from "lucide-react";
+import { ChevronRight, Home, Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { useComboStockList } from "@/lib/comboStock";
+import { StockBadge, StockDetail } from "@/components/erp/Inventory2Stock";
 
 export const Route = createLazyFileRoute("/_app/inventory2")({ component: Inventory2 });
 
@@ -30,6 +32,7 @@ function Inventory2() {
     queryKey: ["inventory-nodes", parentId],
     queryFn: () => fetchChildren(parentId),
   });
+  const { data: comboStock = [] } = useComboStockList();
 
   // Dialog state: null = closed, {} = add, {node} = edit.
   const [editing, setEditing] = useState<null | { node?: Node }>(null);
@@ -111,7 +114,10 @@ function Inventory2() {
                   />
                   <div className="flex items-center justify-between gap-1 px-3 py-2.5">
                     <span className="truncate text-sm font-bold text-slate-700 group-hover:text-[#3b82f6]">{n.name}</span>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                    <div className="flex shrink-0 items-center gap-1">
+                      <StockBadge comboStock={comboStock} path={path} nodeName={n.name} />
+                      <ChevronRight className="h-4 w-4 text-slate-300" />
+                    </div>
                   </div>
                 </button>
                 {/* CRUD icons */}
@@ -148,11 +154,7 @@ function Inventory2() {
           </div>
         )}
 
-        {!isLoading && nodes.length === 0 && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-slate-400">
-            <FolderOpen className="h-4 w-4" /> Nothing here yet — tap Add to create one.
-          </div>
-        )}
+        {!isLoading && nodes.length === 0 && <StockDetail comboStock={comboStock} path={path} />}
       </div>
 
       {/* Add / Edit dialog */}
