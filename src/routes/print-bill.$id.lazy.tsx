@@ -44,12 +44,16 @@ function PrintBill() {
   return (
     <>
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         body { font-family: Arial, sans-serif; background: #fff; color: #000; }
         @page { size: A5 portrait; margin: 8mm; }
         @media print {
           html, body { width: 148mm; }
           .no-print { display: none !important; }
+          .header { background: #1e293b !important; color: #fff !important; }
+          .meta-box { background: #f8fafc !important; }
+          thead tr { background: #1e293b !important; color: #fff !important; }
+          tr:nth-child(even) td { background: #f8fafc !important; }
         }
         .bill { width: 100%; max-width: 148mm; margin: 0 auto; font-size: 10pt; }
         .header { background: #1e293b; color: #fff; padding: 8px 10px; display: flex; justify-content: space-between; align-items: flex-start; }
