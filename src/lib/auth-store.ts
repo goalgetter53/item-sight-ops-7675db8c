@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-export type ShopRole = "admin" | "employee";
+export type ShopRole = "admin" | "employee" | "printer";
 export interface ActiveUser {
   id: string;
   name: string;
@@ -21,7 +21,10 @@ const ROLE_KEY = "scanflow_role";
 
 function getStoredRole(): ShopRole {
   if (typeof window === "undefined") return "employee";
-  return localStorage.getItem(ROLE_KEY) === "admin" ? "admin" : "employee";
+  const v = localStorage.getItem(ROLE_KEY);
+  if (v === "admin") return "admin";
+  if (v === "printer") return "printer";
+  return "employee";
 }
 
 /** Persist the chosen role and update the active user immediately. */
@@ -29,7 +32,8 @@ export function setStoredRole(role: ShopRole) {
   if (typeof window !== "undefined") localStorage.setItem(ROLE_KEY, role);
   const u = useAuth.getState().user;
   if (u && u.role !== role) {
-    useAuth.setState({ user: { ...u, role, name: role === "admin" ? "Admin" : "Employee" } });
+    const name = role === "admin" ? "Admin" : role === "printer" ? "Printer" : "Employee";
+    useAuth.setState({ user: { ...u, role, name } });
   }
 }
 
@@ -52,7 +56,7 @@ function hydrate(supaUser: User | null) {
   }
   // Role is chosen at login time and stored on the device (admin vs employee).
   const role = getStoredRole();
-  const name = role === "admin" ? "Admin" : "Employee";
+  const name = role === "admin" ? "Admin" : role === "printer" ? "Printer" : "Employee";
   const prev = useAuth.getState().user;
   if (prev && prev.id === supaUser.id && prev.role === role && prev.name === name) {
     if (!useAuth.getState().ready) useAuth.setState({ ready: true });

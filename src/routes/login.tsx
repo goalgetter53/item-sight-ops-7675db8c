@@ -7,10 +7,11 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, setStoredRole, type ShopRole } from "@/lib/auth-store";
+import { PRINTER_HOME } from "@/lib/roles";
 import { startDeviceSession } from "@/lib/device-session.functions";
 import { EMPLOYEE_HOME } from "@/lib/roles";
 import { toast } from "sonner";
-import { UserRound, ShieldCheck } from "lucide-react";
+import { UserRound, ShieldCheck, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -23,10 +24,15 @@ function LoginPage() {
   const user = useAuth((s) => s.user);
   const startSession = useServerFn(startDeviceSession);
   const [code, setCode] = useState("");
-  const [busy, setBusy] = useState<null | "employee" | "admin">(null);
+  const [busy, setBusy] = useState<null | "employee" | "admin" | "printer">(null);
+  const [printerCode, setPrinterCode] = useState("");
 
   useEffect(() => {
-    if (user) navigate({ to: user.role === "admin" ? "/dashboard" : EMPLOYEE_HOME });
+    if (user) {
+      if (user.role === "admin") navigate({ to: "/dashboard" });
+      else if (user.role === "printer") navigate({ to: PRINTER_HOME });
+      else navigate({ to: EMPLOYEE_HOME });
+    }
   }, [user, navigate]);
 
   const signIn = async (role: ShopRole) => {
@@ -62,6 +68,15 @@ function LoginPage() {
     } finally {
       setBusy(null);
     }
+  };
+
+  const loginPrinter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (printerCode.trim() !== ADMIN_CODE) { toast.error("Incorrect printer code"); return; }
+    setBusy("printer");
+    try { await signIn("printer"); }
+    catch (err) { toast.error(err instanceof Error ? err.message : "Could not sign in"); }
+    finally { setBusy(null); }
   };
 
   return (
@@ -111,13 +126,35 @@ function LoginPage() {
               autoComplete="off"
             />
           </div>
-          <Button
-            type="submit"
-            variant="secondary"
-            className="w-full h-11"
-            disabled={busy !== null}
-          >
+          <Button type="submit" variant="secondary" className="w-full h-11" disabled={busy !== null}>
             {busy === "admin" ? "Signing in…" : "Login as Admin"}
+          </Button>
+        </form>
+
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">or</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <form onSubmit={loginPrinter} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="printer-code" className="flex items-center gap-1.5">
+              <Printer className="h-4 w-4" /> Printer station code
+            </Label>
+            <Input
+              id="printer-code"
+              type="password"
+              inputMode="numeric"
+              value={printerCode}
+              onChange={(e) => setPrinterCode(e.target.value)}
+              placeholder="Enter printer code"
+              autoComplete="off"
+            />
+          </div>
+          <Button type="submit" variant="outline" className="w-full h-11 gap-2" disabled={busy !== null}>
+            <Printer className="h-4 w-4" />
+            {busy === "printer" ? "Signing in…" : "Open Print Station"}
           </Button>
         </form>
       </Card>

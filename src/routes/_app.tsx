@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/lib/auth-store";
 import { useEffect, useState } from "react";
 import { RoutePending } from "@/components/erp/RoutePending";
-import { isPathAllowedForEmployee, EMPLOYEE_HOME } from "@/lib/roles";
+import { isPathAllowedForEmployee, EMPLOYEE_HOME, PRINTER_HOME } from "@/lib/roles";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
@@ -34,9 +34,14 @@ function AppLayout() {
     if (ready && !user) navigate({ to: "/login" });
   }, [ready, user, navigate]);
 
+  // Printer role belongs at /print-queue, not in the main app.
+  useEffect(() => {
+    if (ready && user?.role === "printer") navigate({ to: PRINTER_HOME });
+  }, [ready, user, navigate]);
+
   // Employees may only open allowlisted pages; bounce them home otherwise.
   useEffect(() => {
-    if (ready && user && user.role !== "admin" && !isPathAllowedForEmployee(pathname)) {
+    if (ready && user && user.role === "employee" && !isPathAllowedForEmployee(pathname)) {
       navigate({ to: EMPLOYEE_HOME });
     }
   }, [ready, user, pathname, navigate]);

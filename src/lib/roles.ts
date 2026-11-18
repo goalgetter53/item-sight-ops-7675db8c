@@ -31,6 +31,7 @@ export const EMPLOYEE_ALLOWED_PREFIXES = [
 
 // Where each role lands after login / when blocked.
 export const EMPLOYEE_HOME = "/inventory2";
+export const PRINTER_HOME = "/print-queue";
 
 export function isPathAllowedForEmployee(pathname: string): boolean {
   return EMPLOYEE_ALLOWED_PREFIXES.some(
