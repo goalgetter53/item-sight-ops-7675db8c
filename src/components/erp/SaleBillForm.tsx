@@ -16,6 +16,7 @@ import { QuickCreatePartyDialog } from "@/components/erp/QuickCreatePartyDialog"
 import { PlyWizardDialog } from "@/components/erp/PlyWizardDialog";
 import { MicaWizardDialog } from "@/components/erp/MicaWizardDialog";
 import { HardwareWizardDialog } from "@/components/erp/HardwareWizardDialog";
+import { adjustComboStock, type ComboCategory } from "@/lib/comboStock";
 import { UpiQrDialog } from "@/components/erp/UpiQrDialog";
 
 // Inactive placeholder products that custom wizard lines reference (sales_items.product_id is NOT NULL).
@@ -476,6 +477,17 @@ export function SaleBillForm({
     if (error) { setBusy(false); toast.error(error.message); return; }
     const saleId = data as string;
     toast.success("Sale recorded");
+
+    // Two-way combo stock: subtract sold qty from each tile item's lot (matches Purchase 2).
+    const comboCat: Record<string, ComboCategory> = {
+      [PLY_CUSTOM_PRODUCT_ID]: "PLY",
+      [MICA_CUSTOM_PRODUCT_ID]: "MICA",
+      [HARDWARE_CUSTOM_PRODUCT_ID]: "HARDWARE",
+    };
+    for (const l of lines) {
+      const cat = comboCat[l.product_id];
+      if (cat) { try { await adjustComboStock(l.name, cat, -l.qty); } catch { /* stock best-effort; sale already saved */ } }
+    }
 
     // Auto-print the thermal receipt when a print server is configured (silent; no
     // dialog). Does nothing if the server isn't set up — use the Thermal button then.

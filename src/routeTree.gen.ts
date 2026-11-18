@@ -9,84 +9,75 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppTaxReportsRouteImport } from './routes/_app.tax-reports'
-import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppSales2RouteImport } from './routes/_app.sales2'
-import { Route as AppReportsRouteImport } from './routes/_app.reports'
-import { Route as AppPartiesRouteImport } from './routes/_app.parties'
-import { Route as AppLedgerRouteImport } from './routes/_app.ledger'
-import { Route as AppInventory2RouteImport } from './routes/_app.inventory2'
-import { Route as AppDoorRouteImport } from './routes/_app.door'
-import { Route as AppDaybookRouteImport } from './routes/_app.daybook'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppAlertsRouteImport } from './routes/_app.alerts'
-import { Route as AppSalesIndexRouteImport } from './routes/_app.sales.index'
-import { Route as AppSalesReturnsIndexRouteImport } from './routes/_app.sales-returns.index'
-import { Route as AppPurchasesIndexRouteImport } from './routes/_app.purchases.index'
-import { Route as AppPurchaseReturnsIndexRouteImport } from './routes/_app.purchase-returns.index'
-import { Route as AppInventoryIndexRouteImport } from './routes/_app.inventory.index'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppDaybookRouteImport } from './routes/_app.daybook'
+import { Route as AppDoorRouteImport } from './routes/_app.door'
+import { Route as AppInventory2RouteImport } from './routes/_app.inventory2'
+import { Route as AppLedgerRouteImport } from './routes/_app.ledger'
+import { Route as AppPartiesRouteImport } from './routes/_app.parties'
+import { Route as AppPurchases2RouteImport } from './routes/_app.purchases2'
+import { Route as AppReportsRouteImport } from './routes/_app.reports'
+import { Route as AppSales2RouteImport } from './routes/_app.sales2'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppTaxReportsRouteImport } from './routes/_app.tax-reports'
 import { Route as AppGodownsIndexRouteImport } from './routes/_app.godowns.index'
-import { Route as ApiPublicSeedBusyImportRouteImport } from './routes/api/public/seed-busy-import'
-import { Route as AppUnitsItemIdRouteImport } from './routes/_app.units.$itemId'
-import { Route as AppSalesReceiptsRouteImport } from './routes/_app.sales.receipts'
-import { Route as AppSalesNewRouteImport } from './routes/_app.sales.new'
-import { Route as AppSalesAllRouteImport } from './routes/_app.sales.all'
-import { Route as AppSalesIdRouteImport } from './routes/_app.sales.$id'
-import { Route as AppPurchasesNewRouteImport } from './routes/_app.purchases.new'
-import { Route as AppPurchasesAllRouteImport } from './routes/_app.purchases.all'
-import { Route as AppPurchasesIdRouteImport } from './routes/_app.purchases.$id'
-import { Route as AppInventorySubcategoriesRouteImport } from './routes/_app.inventory.subcategories'
-import { Route as AppInventoryStockEntryRouteImport } from './routes/_app.inventory.stock-entry'
-import { Route as AppInventoryScanRouteImport } from './routes/_app.inventory.scan'
+import { Route as AppInventoryIndexRouteImport } from './routes/_app.inventory.index'
 import { Route as AppInventoryProductIdRouteImport } from './routes/_app.inventory.$productId'
+import { Route as AppInventoryScanRouteImport } from './routes/_app.inventory.scan'
+import { Route as AppInventoryStockEntryRouteImport } from './routes/_app.inventory.stock-entry'
+import { Route as AppInventorySubcategoriesRouteImport } from './routes/_app.inventory.subcategories'
+import { Route as AppPurchaseReturnsIndexRouteImport } from './routes/_app.purchase-returns.index'
+import { Route as AppPurchasesIndexRouteImport } from './routes/_app.purchases.index'
+import { Route as AppPurchasesIdRouteImport } from './routes/_app.purchases.$id'
+import { Route as AppPurchasesAllRouteImport } from './routes/_app.purchases.all'
+import { Route as AppPurchasesNewRouteImport } from './routes/_app.purchases.new'
+import { Route as AppSalesReturnsIndexRouteImport } from './routes/_app.sales-returns.index'
+import { Route as AppSalesIndexRouteImport } from './routes/_app.sales.index'
+import { Route as AppSalesIdRouteImport } from './routes/_app.sales.$id'
+import { Route as AppSalesAllRouteImport } from './routes/_app.sales.all'
+import { Route as AppSalesNewRouteImport } from './routes/_app.sales.new'
+import { Route as AppSalesReceiptsRouteImport } from './routes/_app.sales.receipts'
+import { Route as AppUnitsItemIdRouteImport } from './routes/_app.units.$itemId'
+import { Route as ApiPublicSeedBusyImportRouteImport } from './routes/api/public/seed-busy-import'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppTaxReportsRoute = AppTaxReportsRouteImport.update({
-  id: '/tax-reports',
-  path: '/tax-reports',
-  getParentRoute: () => AppRoute,
-} as any).lazy(() =>
-  import('./routes/_app.tax-reports.lazy').then((d) => d.Route),
-)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const AppAlertsRoute = AppAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSales2Route = AppSales2RouteImport.update({
-  id: '/sales2',
-  path: '/sales2',
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AppRoute,
-} as any).lazy(() => import('./routes/_app.sales2.lazy').then((d) => d.Route))
-const AppReportsRoute = AppReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
+} as any).lazy(() =>
+  import('./routes/_app.dashboard.lazy').then((d) => d.Route),
+)
+const AppDaybookRoute = AppDaybookRouteImport.update({
+  id: '/daybook',
+  path: '/daybook',
   getParentRoute: () => AppRoute,
-} as any).lazy(() => import('./routes/_app.reports.lazy').then((d) => d.Route))
-const AppPartiesRoute = AppPartiesRouteImport.update({
-  id: '/parties',
-  path: '/parties',
-  getParentRoute: () => AppRoute,
-} as any).lazy(() => import('./routes/_app.parties.lazy').then((d) => d.Route))
-const AppLedgerRoute = AppLedgerRouteImport.update({
-  id: '/ledger',
-  path: '/ledger',
+} as any).lazy(() => import('./routes/_app.daybook.lazy').then((d) => d.Route))
+const AppDoorRoute = AppDoorRouteImport.update({
+  id: '/door',
+  path: '/door',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInventory2Route = AppInventory2RouteImport.update({
@@ -96,50 +87,48 @@ const AppInventory2Route = AppInventory2RouteImport.update({
 } as any).lazy(() =>
   import('./routes/_app.inventory2.lazy').then((d) => d.Route),
 )
-const AppDoorRoute = AppDoorRouteImport.update({
-  id: '/door',
-  path: '/door',
+const AppLedgerRoute = AppLedgerRouteImport.update({
+  id: '/ledger',
+  path: '/ledger',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDaybookRoute = AppDaybookRouteImport.update({
-  id: '/daybook',
-  path: '/daybook',
+const AppPartiesRoute = AppPartiesRouteImport.update({
+  id: '/parties',
+  path: '/parties',
   getParentRoute: () => AppRoute,
-} as any).lazy(() => import('./routes/_app.daybook.lazy').then((d) => d.Route))
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+} as any).lazy(() => import('./routes/_app.parties.lazy').then((d) => d.Route))
+const AppPurchases2Route = AppPurchases2RouteImport.update({
+  id: '/purchases2',
+  path: '/purchases2',
   getParentRoute: () => AppRoute,
 } as any).lazy(() =>
-  import('./routes/_app.dashboard.lazy').then((d) => d.Route),
+  import('./routes/_app.purchases2.lazy').then((d) => d.Route),
 )
-const AppAlertsRoute = AppAlertsRouteImport.update({
-  id: '/alerts',
-  path: '/alerts',
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() => import('./routes/_app.reports.lazy').then((d) => d.Route))
+const AppSales2Route = AppSales2RouteImport.update({
+  id: '/sales2',
+  path: '/sales2',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() => import('./routes/_app.sales2.lazy').then((d) => d.Route))
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
-  id: '/sales/',
-  path: '/sales/',
+const AppTaxReportsRoute = AppTaxReportsRouteImport.update({
+  id: '/tax-reports',
+  path: '/tax-reports',
   getParentRoute: () => AppRoute,
 } as any).lazy(() =>
-  import('./routes/_app.sales.index.lazy').then((d) => d.Route),
+  import('./routes/_app.tax-reports.lazy').then((d) => d.Route),
 )
-const AppSalesReturnsIndexRoute = AppSalesReturnsIndexRouteImport.update({
-  id: '/sales-returns/',
-  path: '/sales-returns/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPurchasesIndexRoute = AppPurchasesIndexRouteImport.update({
-  id: '/purchases/',
-  path: '/purchases/',
-  getParentRoute: () => AppRoute,
-} as any).lazy(() =>
-  import('./routes/_app.purchases.index.lazy').then((d) => d.Route),
-)
-const AppPurchaseReturnsIndexRoute = AppPurchaseReturnsIndexRouteImport.update({
-  id: '/purchase-returns/',
-  path: '/purchase-returns/',
+const AppGodownsIndexRoute = AppGodownsIndexRouteImport.update({
+  id: '/godowns/',
+  path: '/godowns/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInventoryIndexRoute = AppInventoryIndexRouteImport.update({
@@ -149,60 +138,38 @@ const AppInventoryIndexRoute = AppInventoryIndexRouteImport.update({
 } as any).lazy(() =>
   import('./routes/_app.inventory.index.lazy').then((d) => d.Route),
 )
-const AppGodownsIndexRoute = AppGodownsIndexRouteImport.update({
-  id: '/godowns/',
-  path: '/godowns/',
+const AppInventoryProductIdRoute = AppInventoryProductIdRouteImport.update({
+  id: '/inventory/$productId',
+  path: '/inventory/$productId',
   getParentRoute: () => AppRoute,
 } as any)
-const ApiPublicSeedBusyImportRoute = ApiPublicSeedBusyImportRouteImport.update({
-  id: '/api/public/seed-busy-import',
-  path: '/api/public/seed-busy-import',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppUnitsItemIdRoute = AppUnitsItemIdRouteImport.update({
-  id: '/units/$itemId',
-  path: '/units/$itemId',
+const AppInventoryScanRoute = AppInventoryScanRouteImport.update({
+  id: '/inventory/scan',
+  path: '/inventory/scan',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSalesReceiptsRoute = AppSalesReceiptsRouteImport.update({
-  id: '/sales/receipts',
-  path: '/sales/receipts',
+const AppInventoryStockEntryRoute = AppInventoryStockEntryRouteImport.update({
+  id: '/inventory/stock-entry',
+  path: '/inventory/stock-entry',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSalesNewRoute = AppSalesNewRouteImport.update({
-  id: '/sales/new',
-  path: '/sales/new',
+const AppInventorySubcategoriesRoute =
+  AppInventorySubcategoriesRouteImport.update({
+    id: '/inventory/subcategories',
+    path: '/inventory/subcategories',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppPurchaseReturnsIndexRoute = AppPurchaseReturnsIndexRouteImport.update({
+  id: '/purchase-returns/',
+  path: '/purchase-returns/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPurchasesIndexRoute = AppPurchasesIndexRouteImport.update({
+  id: '/purchases/',
+  path: '/purchases/',
   getParentRoute: () => AppRoute,
 } as any).lazy(() =>
-  import('./routes/_app.sales.new.lazy').then((d) => d.Route),
-)
-const AppSalesAllRoute = AppSalesAllRouteImport.update({
-  id: '/sales/all',
-  path: '/sales/all',
-  getParentRoute: () => AppRoute,
-} as any).lazy(() =>
-  import('./routes/_app.sales.all.lazy').then((d) => d.Route),
-)
-const AppSalesIdRoute = AppSalesIdRouteImport.update({
-  id: '/sales/$id',
-  path: '/sales/$id',
-  getParentRoute: () => AppRoute,
-} as any).lazy(() =>
-  import('./routes/_app.sales.$id.lazy').then((d) => d.Route),
-)
-const AppPurchasesNewRoute = AppPurchasesNewRouteImport.update({
-  id: '/purchases/new',
-  path: '/purchases/new',
-  getParentRoute: () => AppRoute,
-} as any).lazy(() =>
-  import('./routes/_app.purchases.new.lazy').then((d) => d.Route),
-)
-const AppPurchasesAllRoute = AppPurchasesAllRouteImport.update({
-  id: '/purchases/all',
-  path: '/purchases/all',
-  getParentRoute: () => AppRoute,
-} as any).lazy(() =>
-  import('./routes/_app.purchases.all.lazy').then((d) => d.Route),
+  import('./routes/_app.purchases.index.lazy').then((d) => d.Route),
 )
 const AppPurchasesIdRoute = AppPurchasesIdRouteImport.update({
   id: '/purchases/$id',
@@ -211,26 +178,67 @@ const AppPurchasesIdRoute = AppPurchasesIdRouteImport.update({
 } as any).lazy(() =>
   import('./routes/_app.purchases.$id.lazy').then((d) => d.Route),
 )
-const AppInventorySubcategoriesRoute =
-  AppInventorySubcategoriesRouteImport.update({
-    id: '/inventory/subcategories',
-    path: '/inventory/subcategories',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppInventoryStockEntryRoute = AppInventoryStockEntryRouteImport.update({
-  id: '/inventory/stock-entry',
-  path: '/inventory/stock-entry',
+const AppPurchasesAllRoute = AppPurchasesAllRouteImport.update({
+  id: '/purchases/all',
+  path: '/purchases/all',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() =>
+  import('./routes/_app.purchases.all.lazy').then((d) => d.Route),
+)
+const AppPurchasesNewRoute = AppPurchasesNewRouteImport.update({
+  id: '/purchases/new',
+  path: '/purchases/new',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() =>
+  import('./routes/_app.purchases.new.lazy').then((d) => d.Route),
+)
+const AppSalesReturnsIndexRoute = AppSalesReturnsIndexRouteImport.update({
+  id: '/sales-returns/',
+  path: '/sales-returns/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppInventoryScanRoute = AppInventoryScanRouteImport.update({
-  id: '/inventory/scan',
-  path: '/inventory/scan',
+const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
+  id: '/sales/',
+  path: '/sales/',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() =>
+  import('./routes/_app.sales.index.lazy').then((d) => d.Route),
+)
+const AppSalesIdRoute = AppSalesIdRouteImport.update({
+  id: '/sales/$id',
+  path: '/sales/$id',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() =>
+  import('./routes/_app.sales.$id.lazy').then((d) => d.Route),
+)
+const AppSalesAllRoute = AppSalesAllRouteImport.update({
+  id: '/sales/all',
+  path: '/sales/all',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() =>
+  import('./routes/_app.sales.all.lazy').then((d) => d.Route),
+)
+const AppSalesNewRoute = AppSalesNewRouteImport.update({
+  id: '/sales/new',
+  path: '/sales/new',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() =>
+  import('./routes/_app.sales.new.lazy').then((d) => d.Route),
+)
+const AppSalesReceiptsRoute = AppSalesReceiptsRouteImport.update({
+  id: '/sales/receipts',
+  path: '/sales/receipts',
   getParentRoute: () => AppRoute,
 } as any)
-const AppInventoryProductIdRoute = AppInventoryProductIdRouteImport.update({
-  id: '/inventory/$productId',
-  path: '/inventory/$productId',
+const AppUnitsItemIdRoute = AppUnitsItemIdRouteImport.update({
+  id: '/units/$itemId',
+  path: '/units/$itemId',
   getParentRoute: () => AppRoute,
+} as any)
+const ApiPublicSeedBusyImportRoute = ApiPublicSeedBusyImportRouteImport.update({
+  id: '/api/public/seed-busy-import',
+  path: '/api/public/seed-busy-import',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -243,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/inventory2': typeof AppInventory2Route
   '/ledger': typeof AppLedgerRoute
   '/parties': typeof AppPartiesRoute
+  '/purchases2': typeof AppPurchases2Route
   '/reports': typeof AppReportsRoute
   '/sales2': typeof AppSales2Route
   '/settings': typeof AppSettingsRoute
@@ -277,6 +286,7 @@ export interface FileRoutesByTo {
   '/inventory2': typeof AppInventory2Route
   '/ledger': typeof AppLedgerRoute
   '/parties': typeof AppPartiesRoute
+  '/purchases2': typeof AppPurchases2Route
   '/reports': typeof AppReportsRoute
   '/sales2': typeof AppSales2Route
   '/settings': typeof AppSettingsRoute
@@ -313,6 +323,7 @@ export interface FileRoutesById {
   '/_app/inventory2': typeof AppInventory2Route
   '/_app/ledger': typeof AppLedgerRoute
   '/_app/parties': typeof AppPartiesRoute
+  '/_app/purchases2': typeof AppPurchases2Route
   '/_app/reports': typeof AppReportsRoute
   '/_app/sales2': typeof AppSales2Route
   '/_app/settings': typeof AppSettingsRoute
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/inventory2'
     | '/ledger'
     | '/parties'
+    | '/purchases2'
     | '/reports'
     | '/sales2'
     | '/settings'
@@ -383,6 +395,7 @@ export interface FileRouteTypes {
     | '/inventory2'
     | '/ledger'
     | '/parties'
+    | '/purchases2'
     | '/reports'
     | '/sales2'
     | '/settings'
@@ -418,6 +431,7 @@ export interface FileRouteTypes {
     | '/_app/inventory2'
     | '/_app/ledger'
     | '/_app/parties'
+    | '/_app/purchases2'
     | '/_app/reports'
     | '/_app/sales2'
     | '/_app/settings'
@@ -452,11 +466,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -466,74 +480,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/tax-reports': {
-      id: '/_app/tax-reports'
-      path: '/tax-reports'
-      fullPath: '/tax-reports'
-      preLoaderRoute: typeof AppTaxReportsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/settings': {
-      id: '/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sales2': {
-      id: '/_app/sales2'
-      path: '/sales2'
-      fullPath: '/sales2'
-      preLoaderRoute: typeof AppSales2RouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/reports': {
-      id: '/_app/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AppReportsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/parties': {
-      id: '/_app/parties'
-      path: '/parties'
-      fullPath: '/parties'
-      preLoaderRoute: typeof AppPartiesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ledger': {
-      id: '/_app/ledger'
-      path: '/ledger'
-      fullPath: '/ledger'
-      preLoaderRoute: typeof AppLedgerRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/inventory2': {
-      id: '/_app/inventory2'
-      path: '/inventory2'
-      fullPath: '/inventory2'
-      preLoaderRoute: typeof AppInventory2RouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/door': {
-      id: '/_app/door'
-      path: '/door'
-      fullPath: '/door'
-      preLoaderRoute: typeof AppDoorRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/daybook': {
-      id: '/_app/daybook'
-      path: '/daybook'
-      fullPath: '/daybook'
-      preLoaderRoute: typeof AppDaybookRouteImport
+    '/_app/alerts': {
+      id: '/_app/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AppAlertsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
@@ -543,46 +501,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/alerts': {
-      id: '/_app/alerts'
-      path: '/alerts'
-      fullPath: '/alerts'
-      preLoaderRoute: typeof AppAlertsRouteImport
+    '/_app/daybook': {
+      id: '/_app/daybook'
+      path: '/daybook'
+      fullPath: '/daybook'
+      preLoaderRoute: typeof AppDaybookRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/sales/': {
-      id: '/_app/sales/'
-      path: '/sales'
-      fullPath: '/sales/'
-      preLoaderRoute: typeof AppSalesIndexRouteImport
+    '/_app/door': {
+      id: '/_app/door'
+      path: '/door'
+      fullPath: '/door'
+      preLoaderRoute: typeof AppDoorRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/sales-returns/': {
-      id: '/_app/sales-returns/'
-      path: '/sales-returns'
-      fullPath: '/sales-returns/'
-      preLoaderRoute: typeof AppSalesReturnsIndexRouteImport
+    '/_app/inventory2': {
+      id: '/_app/inventory2'
+      path: '/inventory2'
+      fullPath: '/inventory2'
+      preLoaderRoute: typeof AppInventory2RouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/purchases/': {
-      id: '/_app/purchases/'
-      path: '/purchases'
-      fullPath: '/purchases/'
-      preLoaderRoute: typeof AppPurchasesIndexRouteImport
+    '/_app/ledger': {
+      id: '/_app/ledger'
+      path: '/ledger'
+      fullPath: '/ledger'
+      preLoaderRoute: typeof AppLedgerRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/purchase-returns/': {
-      id: '/_app/purchase-returns/'
-      path: '/purchase-returns'
-      fullPath: '/purchase-returns/'
-      preLoaderRoute: typeof AppPurchaseReturnsIndexRouteImport
+    '/_app/parties': {
+      id: '/_app/parties'
+      path: '/parties'
+      fullPath: '/parties'
+      preLoaderRoute: typeof AppPartiesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/inventory/': {
-      id: '/_app/inventory/'
-      path: '/inventory'
-      fullPath: '/inventory/'
-      preLoaderRoute: typeof AppInventoryIndexRouteImport
+    '/_app/purchases2': {
+      id: '/_app/purchases2'
+      path: '/purchases2'
+      fullPath: '/purchases2'
+      preLoaderRoute: typeof AppPurchases2RouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reports': {
+      id: '/_app/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales2': {
+      id: '/_app/sales2'
+      path: '/sales2'
+      fullPath: '/sales2'
+      preLoaderRoute: typeof AppSales2RouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tax-reports': {
+      id: '/_app/tax-reports'
+      path: '/tax-reports'
+      fullPath: '/tax-reports'
+      preLoaderRoute: typeof AppTaxReportsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/godowns/': {
@@ -592,81 +578,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGodownsIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/public/seed-busy-import': {
-      id: '/api/public/seed-busy-import'
-      path: '/api/public/seed-busy-import'
-      fullPath: '/api/public/seed-busy-import'
-      preLoaderRoute: typeof ApiPublicSeedBusyImportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/units/$itemId': {
-      id: '/_app/units/$itemId'
-      path: '/units/$itemId'
-      fullPath: '/units/$itemId'
-      preLoaderRoute: typeof AppUnitsItemIdRouteImport
+    '/_app/inventory/': {
+      id: '/_app/inventory/'
+      path: '/inventory'
+      fullPath: '/inventory/'
+      preLoaderRoute: typeof AppInventoryIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/sales/receipts': {
-      id: '/_app/sales/receipts'
-      path: '/sales/receipts'
-      fullPath: '/sales/receipts'
-      preLoaderRoute: typeof AppSalesReceiptsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sales/new': {
-      id: '/_app/sales/new'
-      path: '/sales/new'
-      fullPath: '/sales/new'
-      preLoaderRoute: typeof AppSalesNewRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sales/all': {
-      id: '/_app/sales/all'
-      path: '/sales/all'
-      fullPath: '/sales/all'
-      preLoaderRoute: typeof AppSalesAllRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sales/$id': {
-      id: '/_app/sales/$id'
-      path: '/sales/$id'
-      fullPath: '/sales/$id'
-      preLoaderRoute: typeof AppSalesIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/purchases/new': {
-      id: '/_app/purchases/new'
-      path: '/purchases/new'
-      fullPath: '/purchases/new'
-      preLoaderRoute: typeof AppPurchasesNewRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/purchases/all': {
-      id: '/_app/purchases/all'
-      path: '/purchases/all'
-      fullPath: '/purchases/all'
-      preLoaderRoute: typeof AppPurchasesAllRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/purchases/$id': {
-      id: '/_app/purchases/$id'
-      path: '/purchases/$id'
-      fullPath: '/purchases/$id'
-      preLoaderRoute: typeof AppPurchasesIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/inventory/subcategories': {
-      id: '/_app/inventory/subcategories'
-      path: '/inventory/subcategories'
-      fullPath: '/inventory/subcategories'
-      preLoaderRoute: typeof AppInventorySubcategoriesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/inventory/stock-entry': {
-      id: '/_app/inventory/stock-entry'
-      path: '/inventory/stock-entry'
-      fullPath: '/inventory/stock-entry'
-      preLoaderRoute: typeof AppInventoryStockEntryRouteImport
+    '/_app/inventory/$productId': {
+      id: '/_app/inventory/$productId'
+      path: '/inventory/$productId'
+      fullPath: '/inventory/$productId'
+      preLoaderRoute: typeof AppInventoryProductIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/inventory/scan': {
@@ -676,12 +599,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInventoryScanRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/inventory/$productId': {
-      id: '/_app/inventory/$productId'
-      path: '/inventory/$productId'
-      fullPath: '/inventory/$productId'
-      preLoaderRoute: typeof AppInventoryProductIdRouteImport
+    '/_app/inventory/stock-entry': {
+      id: '/_app/inventory/stock-entry'
+      path: '/inventory/stock-entry'
+      fullPath: '/inventory/stock-entry'
+      preLoaderRoute: typeof AppInventoryStockEntryRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/inventory/subcategories': {
+      id: '/_app/inventory/subcategories'
+      path: '/inventory/subcategories'
+      fullPath: '/inventory/subcategories'
+      preLoaderRoute: typeof AppInventorySubcategoriesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/purchase-returns/': {
+      id: '/_app/purchase-returns/'
+      path: '/purchase-returns'
+      fullPath: '/purchase-returns/'
+      preLoaderRoute: typeof AppPurchaseReturnsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/purchases/': {
+      id: '/_app/purchases/'
+      path: '/purchases'
+      fullPath: '/purchases/'
+      preLoaderRoute: typeof AppPurchasesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/purchases/$id': {
+      id: '/_app/purchases/$id'
+      path: '/purchases/$id'
+      fullPath: '/purchases/$id'
+      preLoaderRoute: typeof AppPurchasesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/purchases/all': {
+      id: '/_app/purchases/all'
+      path: '/purchases/all'
+      fullPath: '/purchases/all'
+      preLoaderRoute: typeof AppPurchasesAllRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/purchases/new': {
+      id: '/_app/purchases/new'
+      path: '/purchases/new'
+      fullPath: '/purchases/new'
+      preLoaderRoute: typeof AppPurchasesNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales-returns/': {
+      id: '/_app/sales-returns/'
+      path: '/sales-returns'
+      fullPath: '/sales-returns/'
+      preLoaderRoute: typeof AppSalesReturnsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales/': {
+      id: '/_app/sales/'
+      path: '/sales'
+      fullPath: '/sales/'
+      preLoaderRoute: typeof AppSalesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales/$id': {
+      id: '/_app/sales/$id'
+      path: '/sales/$id'
+      fullPath: '/sales/$id'
+      preLoaderRoute: typeof AppSalesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales/all': {
+      id: '/_app/sales/all'
+      path: '/sales/all'
+      fullPath: '/sales/all'
+      preLoaderRoute: typeof AppSalesAllRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales/new': {
+      id: '/_app/sales/new'
+      path: '/sales/new'
+      fullPath: '/sales/new'
+      preLoaderRoute: typeof AppSalesNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales/receipts': {
+      id: '/_app/sales/receipts'
+      path: '/sales/receipts'
+      fullPath: '/sales/receipts'
+      preLoaderRoute: typeof AppSalesReceiptsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/units/$itemId': {
+      id: '/_app/units/$itemId'
+      path: '/units/$itemId'
+      fullPath: '/units/$itemId'
+      preLoaderRoute: typeof AppUnitsItemIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/api/public/seed-busy-import': {
+      id: '/api/public/seed-busy-import'
+      path: '/api/public/seed-busy-import'
+      fullPath: '/api/public/seed-busy-import'
+      preLoaderRoute: typeof ApiPublicSeedBusyImportRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -694,6 +715,7 @@ interface AppRouteChildren {
   AppInventory2Route: typeof AppInventory2Route
   AppLedgerRoute: typeof AppLedgerRoute
   AppPartiesRoute: typeof AppPartiesRoute
+  AppPurchases2Route: typeof AppPurchases2Route
   AppReportsRoute: typeof AppReportsRoute
   AppSales2Route: typeof AppSales2Route
   AppSettingsRoute: typeof AppSettingsRoute
@@ -726,6 +748,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppInventory2Route: AppInventory2Route,
   AppLedgerRoute: AppLedgerRoute,
   AppPartiesRoute: AppPartiesRoute,
+  AppPurchases2Route: AppPurchases2Route,
   AppReportsRoute: AppReportsRoute,
   AppSales2Route: AppSales2Route,
   AppSettingsRoute: AppSettingsRoute,
