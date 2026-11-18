@@ -3,9 +3,7 @@ import type { ShopRole } from "@/lib/auth-store";
 // Sidebar nav keys an employee is allowed to see. Everything else (dashboard,
 // ledger, settings) is admin-only.
 export const EMPLOYEE_NAV_KEYS = [
-  "inventory",
   "inventory2",
-  "subcategories",
   "purchases2",
   "purchase_returns",
   "sales2",
@@ -32,7 +30,7 @@ export const EMPLOYEE_ALLOWED_PREFIXES = [
 ] as const;
 
 // Where each role lands after login / when blocked.
-export const EMPLOYEE_HOME = "/inventory";
+export const EMPLOYEE_HOME = "/inventory2";
 
 export function isPathAllowedForEmployee(pathname: string): boolean {
   return EMPLOYEE_ALLOWED_PREFIXES.some(
