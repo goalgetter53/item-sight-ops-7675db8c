@@ -9,6 +9,7 @@ import { ChevronRight, Home, Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useComboStockList } from "@/lib/comboStock";
 import { StockBadge, StockDetail } from "@/components/erp/Inventory2Stock";
+import { plyDefault, micaDefault, hardwareDefault, doorDefault } from "@/lib/tile-images";
 
 export const Route = createLazyFileRoute("/_app/inventory2")({ component: Inventory2 });
 
@@ -111,10 +112,10 @@ function Inventory2() {
                     src={n.image_url || (() => {
                       if (path.length !== 1) return `https://placehold.co/320x200?text=${encodeURIComponent(n.name)}`;
                       const u = n.name.toUpperCase();
-                      if (u.includes("PLY")) return "/ply-default.png";
-                      if (u.includes("MICA")) return "/mica-default.png";
-                      if (u.includes("HARDWARE")) return "/hardware-default.png";
-                      if (u.includes("DOOR")) return "/door-default.png";
+                      if (u.includes("PLY")) return plyDefault;
+                      if (u.includes("MICA")) return micaDefault;
+                      if (u.includes("HARDWARE")) return hardwareDefault;
+                      if (u.includes("DOOR")) return doorDefault;
                       return `https://placehold.co/320x200?text=${encodeURIComponent(n.name)}`;
                     })()}
                     alt={n.name}

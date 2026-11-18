@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { plyDefault, micaDefault, hardwareDefault, doorDefault } from "@/lib/tile-images";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -693,7 +694,7 @@ export function SaleBillForm({
                 className="group flex flex-col items-center justify-center gap-3 bg-white border border-[#e8ecf1] rounded-xl p-6 shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]"
               >
                 <img
-                  src={label === "PLY" ? "/ply-default.png" : label === "MICA" ? "/mica-default.png" : label === "HARDWARE" ? "/hardware-default.png" : "/door-default.png"}
+                  src={label === "PLY" ? plyDefault : label === "MICA" ? micaDefault : label === "HARDWARE" ? hardwareDefault : doorDefault}
                   alt={`${label} category`}
                   className="w-full h-32 object-cover rounded-lg bg-slate-100"
                 />

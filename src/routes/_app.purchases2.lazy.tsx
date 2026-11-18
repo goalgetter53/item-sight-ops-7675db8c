@@ -8,6 +8,7 @@ import { inr } from "@/lib/codes";
 import { useAuth } from "@/lib/auth-store";
 import { PurchaseItemDialog, type PurchaseItem } from "@/components/erp/PurchaseItemDialog";
 import { adjustComboStock, type ComboCategory } from "@/lib/comboStock";
+import { plyDefault, micaDefault, hardwareDefault } from "@/lib/tile-images";
 import { Plus, Trash2, Check, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -180,7 +181,7 @@ function Purchase2() {
           {TILES.map((t) => (
             <button key={t} type="button" onClick={() => setWizard(t)}
               className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]">
-              <img src={t === "PLY" ? "/ply-default.png" : t === "MICA" ? "/mica-default.png" : "/hardware-default.png"} alt={t} className="w-full h-24 object-cover" />
+              <img src={t === "PLY" ? plyDefault : t === "MICA" ? micaDefault : hardwareDefault} alt={t} className="w-full h-24 object-cover" />
               <span className="py-2 text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{t}</span>
             </button>
           ))}
