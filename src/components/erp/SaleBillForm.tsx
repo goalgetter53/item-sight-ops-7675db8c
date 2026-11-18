@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScanInput } from "@/components/erp/ScanInput";
+import { VoiceSearchPicker } from "@/components/erp/VoiceSearchPicker";
 import { useAuth } from "@/lib/auth-store";
 import { toast } from "sonner";
 import { inr, parseScannedCode } from "@/lib/codes";
@@ -582,17 +583,14 @@ export function SaleBillForm({
                   Customer {f.customer.required && <span className="text-red-500">*</span>}
                 </label>
                 <div className="flex gap-2">
-                  <select
-                    className="flex-1 min-w-0 h-10 px-3 bg-[#fafbfc] border border-[#e8ecf1] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/20 focus:border-[#3b82f6]"
+                  <VoiceSearchPicker
+                    options={customers.map((c) => ({ id: c.id, label: c.name, sub: c.phone ?? undefined }))}
                     value={customerId}
-                    onChange={(e) => setCustomerId(e.target.value)}
-                  >
-                    <option value="">{f.customer.required ? "Select customer" : "Walk-in customer"}</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}{c.state ? ` — ${c.state}` : ""}</option>
-                    ))}
-                  </select>
-                  <Button type="button" variant="outline" size="sm" className="h-10 gap-1 shrink-0 whitespace-nowrap" onClick={() => setCreateCustomerOpen(true)}>
+                    onChange={(id) => setCustomerId(id)}
+                    placeholder={f.customer.required ? "Search customer…" : "Walk-in / search…"}
+                    required={f.customer.required}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="h-11 gap-1 shrink-0 whitespace-nowrap" onClick={() => setCreateCustomerOpen(true)}>
                     <Plus className="h-4 w-4" /> <span>New</span>
                   </Button>
                 </div>

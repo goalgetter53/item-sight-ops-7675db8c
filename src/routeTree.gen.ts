@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PrintQueueRouteImport } from './routes/print-queue'
 import { Route as AppAlertsRouteImport } from './routes/_app.alerts'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppDaybookRouteImport } from './routes/_app.daybook'
@@ -24,6 +25,7 @@ import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppSales2RouteImport } from './routes/_app.sales2'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppTaxReportsRouteImport } from './routes/_app.tax-reports'
+import { Route as PrintBillIdRouteImport } from './routes/print-bill.$id'
 import { Route as AppGodownsIndexRouteImport } from './routes/_app.godowns.index'
 import { Route as AppInventoryIndexRouteImport } from './routes/_app.inventory.index'
 import { Route as AppInventoryProductIdRouteImport } from './routes/_app.inventory.$productId'
@@ -58,6 +60,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrintQueueRoute = PrintQueueRouteImport.update({
+  id: '/print-queue',
+  path: '/print-queue',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/print-queue.lazy').then((d) => d.Route))
 const AppAlertsRoute = AppAlertsRouteImport.update({
   id: '/alerts',
   path: '/alerts',
@@ -125,6 +132,13 @@ const AppTaxReportsRoute = AppTaxReportsRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any).lazy(() =>
   import('./routes/_app.tax-reports.lazy').then((d) => d.Route),
+)
+const PrintBillIdRoute = PrintBillIdRouteImport.update({
+  id: '/print-bill/$id',
+  path: '/print-bill/$id',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() =>
+  import('./routes/print-bill.$id.lazy').then((d) => d.Route),
 )
 const AppGodownsIndexRoute = AppGodownsIndexRouteImport.update({
   id: '/godowns/',
@@ -244,6 +258,7 @@ const ApiPublicSeedBusyImportRoute = ApiPublicSeedBusyImportRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/print-queue': typeof PrintQueueRoute
   '/alerts': typeof AppAlertsRoute
   '/dashboard': typeof AppDashboardRoute
   '/daybook': typeof AppDaybookRoute
@@ -256,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/sales2': typeof AppSales2Route
   '/settings': typeof AppSettingsRoute
   '/tax-reports': typeof AppTaxReportsRoute
+  '/print-bill/$id': typeof PrintBillIdRoute
   '/inventory/$productId': typeof AppInventoryProductIdRoute
   '/inventory/scan': typeof AppInventoryScanRoute
   '/inventory/stock-entry': typeof AppInventoryStockEntryRoute
@@ -279,6 +295,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/print-queue': typeof PrintQueueRoute
   '/alerts': typeof AppAlertsRoute
   '/dashboard': typeof AppDashboardRoute
   '/daybook': typeof AppDaybookRoute
@@ -291,6 +308,7 @@ export interface FileRoutesByTo {
   '/sales2': typeof AppSales2Route
   '/settings': typeof AppSettingsRoute
   '/tax-reports': typeof AppTaxReportsRoute
+  '/print-bill/$id': typeof PrintBillIdRoute
   '/inventory/$productId': typeof AppInventoryProductIdRoute
   '/inventory/scan': typeof AppInventoryScanRoute
   '/inventory/stock-entry': typeof AppInventoryStockEntryRoute
@@ -316,6 +334,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/print-queue': typeof PrintQueueRoute
   '/_app/alerts': typeof AppAlertsRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/daybook': typeof AppDaybookRoute
@@ -328,6 +347,7 @@ export interface FileRoutesById {
   '/_app/sales2': typeof AppSales2Route
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tax-reports': typeof AppTaxReportsRoute
+  '/print-bill/$id': typeof PrintBillIdRoute
   '/_app/inventory/$productId': typeof AppInventoryProductIdRoute
   '/_app/inventory/scan': typeof AppInventoryScanRoute
   '/_app/inventory/stock-entry': typeof AppInventoryStockEntryRoute
@@ -353,6 +373,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/print-queue'
     | '/alerts'
     | '/dashboard'
     | '/daybook'
@@ -365,6 +386,7 @@ export interface FileRouteTypes {
     | '/sales2'
     | '/settings'
     | '/tax-reports'
+    | '/print-bill/$id'
     | '/inventory/$productId'
     | '/inventory/scan'
     | '/inventory/stock-entry'
@@ -388,6 +410,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/print-queue'
     | '/alerts'
     | '/dashboard'
     | '/daybook'
@@ -400,6 +423,7 @@ export interface FileRouteTypes {
     | '/sales2'
     | '/settings'
     | '/tax-reports'
+    | '/print-bill/$id'
     | '/inventory/$productId'
     | '/inventory/scan'
     | '/inventory/stock-entry'
@@ -424,6 +448,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/print-queue'
     | '/_app/alerts'
     | '/_app/dashboard'
     | '/_app/daybook'
@@ -436,6 +461,7 @@ export interface FileRouteTypes {
     | '/_app/sales2'
     | '/_app/settings'
     | '/_app/tax-reports'
+    | '/print-bill/$id'
     | '/_app/inventory/$productId'
     | '/_app/inventory/scan'
     | '/_app/inventory/stock-entry'
@@ -461,6 +487,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PrintQueueRoute: typeof PrintQueueRoute
+  PrintBillIdRoute: typeof PrintBillIdRoute
   ApiPublicSeedBusyImportRoute: typeof ApiPublicSeedBusyImportRoute
 }
 
@@ -485,6 +513,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/print-queue': {
+      id: '/print-queue'
+      path: '/print-queue'
+      fullPath: '/print-queue'
+      preLoaderRoute: typeof PrintQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/alerts': {
@@ -570,6 +605,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tax-reports'
       preLoaderRoute: typeof AppTaxReportsRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/print-bill/$id': {
+      id: '/print-bill/$id'
+      path: '/print-bill/$id'
+      fullPath: '/print-bill/$id'
+      preLoaderRoute: typeof PrintBillIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/godowns/': {
       id: '/_app/godowns/'
@@ -779,6 +821,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  PrintQueueRoute: PrintQueueRoute,
+  PrintBillIdRoute: PrintBillIdRoute,
   ApiPublicSeedBusyImportRoute: ApiPublicSeedBusyImportRoute,
 }
 export const routeTree = rootRouteImport

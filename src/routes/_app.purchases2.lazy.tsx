@@ -1,5 +1,5 @@
 import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/erp/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { PurchaseItemDialog, type PurchaseItem } from "@/components/erp/Purchase
 import { adjustComboStock, type ComboCategory } from "@/lib/comboStock";
 import { plyDefault, micaDefault, hardwareDefault } from "@/lib/tile-images";
 import { Plus, Trash2, Check, ArrowLeft } from "lucide-react";
+import { VoiceSearchPicker } from "@/components/erp/VoiceSearchPicker";
 import { toast } from "sonner";
 
 export const Route = createLazyFileRoute("/_app/purchases2")({ component: Purchase2 });
@@ -24,8 +25,6 @@ function Purchase2() {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [supplierId, setSupplierId] = useState("");
   const [supplierName, setSupplierName] = useState("");
-  const [supplierFocus, setSupplierFocus] = useState(false);
-  const supplierBoxRef = useRef<HTMLDivElement>(null);
   const [billNo, setBillNo] = useState("");
   const [billDate, setBillDate] = useState(todayLocal());
   const [billType, setBillType] = useState<"gst" | "non_gst">("gst");
@@ -39,28 +38,13 @@ function Purchase2() {
     supabase.from("suppliers").select("*").order("name").then(({ data }) => setSuppliers(data ?? []));
   }, []);
 
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (supplierBoxRef.current && !supplierBoxRef.current.contains(e.target as Node)) setSupplierFocus(false);
-    };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, []);
 
-  const supplierMatches = useMemo(() => {
-    const q = supplierName.trim().toLowerCase();
-    if (!q) return suppliers.slice(0, 8);
-    return suppliers.filter((s) => s.name.toLowerCase().includes(q)).slice(0, 8);
-  }, [supplierName, suppliers]);
-
-  const pickSupplier = (s: any) => { setSupplierId(s.id); setSupplierName(s.name); setSupplierFocus(false); };
-  const createSupplier = async () => {
-    const name = supplierName.trim();
-    if (!name) return;
+  const createSupplier = async (name: string) => {
     const { data, error } = await supabase.from("suppliers").insert({ name }).select().single();
     if (error) { toast.error(error.message); return; }
     setSuppliers((p) => [...p, data]);
-    pickSupplier(data);
+    setSupplierId(data.id);
+    setSupplierName(data.name);
   };
 
   const addItem = (it: PurchaseItem) =>
@@ -124,25 +108,15 @@ function Purchase2() {
         {/* Header */}
         <div className="rounded-2xl border border-[#e8ecf1] bg-white p-4 shadow-sm space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="relative sm:col-span-1" ref={supplierBoxRef}>
+            <div className="sm:col-span-1">
               <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Supplier</label>
-              <Input value={supplierName} placeholder="Search or add supplier…"
-                onFocus={() => setSupplierFocus(true)}
-                onChange={(e) => { setSupplierName(e.target.value); setSupplierId(""); setSupplierFocus(true); }} />
-              {supplierFocus && (
-                <div className="absolute z-20 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg">
-                  {supplierMatches.map((s) => (
-                    <button key={s.id} type="button" onClick={() => pickSupplier(s)}
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50">{s.name}</button>
-                  ))}
-                  {supplierName.trim() && !suppliers.some((s) => s.name.toLowerCase() === supplierName.trim().toLowerCase()) && (
-                    <button type="button" onClick={createSupplier}
-                      className="block w-full border-t px-3 py-2 text-left text-sm font-semibold text-[#3b82f6] hover:bg-slate-50">
-                      + Add “{supplierName.trim()}”
-                    </button>
-                  )}
-                </div>
-              )}
+              <VoiceSearchPicker
+                options={suppliers.map((s) => ({ id: s.id, label: s.name }))}
+                value={supplierId}
+                onChange={(id, label) => { setSupplierId(id); setSupplierName(label); }}
+                placeholder="Search or add supplier…"
+                onCreate={createSupplier}
+              />
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Invoice No.</label>
