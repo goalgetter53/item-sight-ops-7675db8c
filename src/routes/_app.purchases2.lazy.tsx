@@ -179,8 +179,9 @@ function Purchase2() {
         <div className="grid grid-cols-3 gap-3">
           {TILES.map((t) => (
             <button key={t} type="button" onClick={() => setWizard(t)}
-              className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white p-6 shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]">
-              <span className="text-lg font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{t}</span>
+              className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]">
+              <img src={t === "PLY" ? "/ply-default.png" : t === "MICA" ? "/mica-default.png" : "/hardware-default.png"} alt={t} className="w-full h-24 object-cover" />
+              <span className="py-2 text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{t}</span>
             </button>
           ))}
         </div>

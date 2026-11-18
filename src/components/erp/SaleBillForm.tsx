@@ -693,7 +693,7 @@ export function SaleBillForm({
                 className="group flex flex-col items-center justify-center gap-3 bg-white border border-[#e8ecf1] rounded-xl p-6 shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]"
               >
                 <img
-                  src={`https://placehold.co/320x200?text=${label}`}
+                  src={label === "PLY" ? "/ply-default.png" : label === "MICA" ? "/mica-default.png" : label === "HARDWARE" ? "/hardware-default.png" : "/door-default.png"}
                   alt={`${label} category`}
                   className="w-full h-32 object-cover rounded-lg bg-slate-100"
                 />
