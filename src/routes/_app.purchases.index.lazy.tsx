@@ -1,5 +1,5 @@
-import { createLazyFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,12 @@ function compactInr(n: number) {
 
 function Purchases() {
   const isAdmin = useAuth((s) => s.user)?.role === "admin";
+  const nav = useNavigate();
+
+  useEffect(() => {
+    if (!isAdmin) nav({ to: "/purchases2" });
+  }, [isAdmin, nav]);
+
   const [status, setStatus] = useState<string>("all");
   const [page, setPage] = useState(0);
   const pageSize = 5;

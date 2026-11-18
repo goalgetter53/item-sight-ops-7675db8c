@@ -88,7 +88,7 @@ function Sales() {
     return buckets;
   }, [rows, range]);
 
-  const recent = rows.slice(0, 5);
+  const recent = rows.slice(0, isAdmin ? 5 : 10);
 
   const reset = () => {
     setPaymentStatus("all");
@@ -103,9 +103,11 @@ function Sales() {
         subtitle="Manage orders, track revenue, and monitor transactions."
         actions={
           <>
-            <Button asChild variant="outline" size="sm" className="gap-2">
-              <Link to="/sales/receipts"><Wallet className="h-4 w-4" /> Receipts</Link>
-            </Button>
+            {isAdmin && (
+              <Button asChild variant="outline" size="sm" className="gap-2">
+                <Link to="/sales/receipts"><Wallet className="h-4 w-4" /> Receipts</Link>
+              </Button>
+            )}
             <Button asChild>
               <Link to="/sales/new">
                 <Plus className="h-4 w-4" />
@@ -173,7 +175,7 @@ function Sales() {
         </div>
 
         {/* Trends + Filters */}
-        <div className="grid gap-5 grid-cols-1 lg:grid-cols-3">
+        <div className={`grid gap-5 grid-cols-1 ${isAdmin ? "lg:grid-cols-3" : ""}`}>
           {isAdmin && (
           <Card className="lg:col-span-2 p-5">
             <div className="flex items-center justify-between mb-4">
@@ -202,7 +204,7 @@ function Sales() {
           </Card>
           )}
 
-          <Card className={isAdmin ? "p-5" : "lg:col-span-3 p-5"}>
+          {isAdmin && <Card className="p-5">
             <h2 className="text-lg font-semibold mb-4">Filter Transactions</h2>
             <div className="space-y-4">
               <div>
@@ -254,19 +256,21 @@ function Sales() {
                 </Button>
               </div>
             </div>
-          </Card>
+          </Card>}
         </div>
 
         {/* Recent transactions */}
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <h2 className="text-lg font-semibold">Recent Transactions</h2>
-            <Link
-              to="/sales/all"
-              className="text-sm font-medium text-primary inline-flex items-center gap-1 hover:underline"
-            >
-              View All <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            {isAdmin && (
+              <Link
+                to="/sales/all"
+                className="text-sm font-medium text-primary inline-flex items-center gap-1 hover:underline"
+              >
+                View All <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
           </div>
           <Table>
             <TableHeader>
