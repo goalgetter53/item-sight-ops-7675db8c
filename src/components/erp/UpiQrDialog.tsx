@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import QRCode from "qrcode";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,7 +58,7 @@ export function UpiQrDialog({
   useEffect(() => {
     if (!open || !vpa) { setQr(""); return; }
     const uri = buildUpiUri(vpa, payee, amount, tr, mc);
-    QRCode.toDataURL(uri, { margin: 1, width: 300 }).then(setQr).catch(() => setQr(""));
+    import("qrcode").then(({ default: QRCode }) => QRCode.toDataURL(uri, { margin: 1, width: 300 }).then(setQr).catch(() => setQr("")));
   }, [open, vpa, payee, amount, tr, mc]);
 
   return (

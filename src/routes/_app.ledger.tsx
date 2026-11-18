@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/erp/PageHeader";
 import { ReturnTimelineDialog } from "@/components/erp/ReturnTimelineDialog";
 import { inr, fmtDate } from "@/lib/codes";
-import { buildStatementPdf, statementFileName } from "@/lib/statement-pdf";
 import { toast } from "sonner";
 import { Search, Users, Truck, FileText, ShoppingCart, Receipt as ReceiptIcon, RotateCcw, Wallet, Banknote, ArrowDownCircle, ArrowUpCircle, FileDown } from "lucide-react";
 
@@ -327,6 +326,7 @@ function LedgerPage() {
     const closingBal = inRange.length ? inRange[inRange.length - 1].balance : openingBal;
     const { data: shop } = await supabase.from("app_settings").select("shop_name, address, gstin").eq("id", true).maybeSingle();
     try {
+      const { buildStatementPdf, statementFileName } = await import("@/lib/statement-pdf");
       const pdf = buildStatementPdf({
         shop: shop ?? null,
         partyName: selected.name,
