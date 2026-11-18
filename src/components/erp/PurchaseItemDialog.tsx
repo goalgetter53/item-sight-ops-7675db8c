@@ -74,7 +74,15 @@ export function PurchaseItemDialog({
     if (rateN <= 0) return;
     if (cat === "MICA" && !micaNo.trim()) return;
     onAdd({ name, category: cat, qty: qtyN, rate: rateN });
-    close();
+    if (cat === "PLY") {
+      // After saving PLY, go back to brand chooser (keep size, clear brand)
+      setPath((p) => p.slice(0, -1));
+      setPhase("browse");
+      setQty("1");
+      setRate("");
+    } else {
+      close();
+    }
   };
 
   const title =

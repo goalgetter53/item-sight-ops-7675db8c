@@ -55,7 +55,7 @@ function PrintBill() {
           thead tr { background: #1e293b !important; color: #fff !important; }
           tr:nth-child(even) td { background: #f8fafc !important; }
         }
-        .bill { width: 100%; max-width: 148mm; margin: 0 auto; font-size: 10pt; position: static !important; }
+        .bill { width: 100%; margin: 0; font-size: 10pt; position: static !important; }
         .header { background: #1e293b; color: #fff; padding: 8px 10px; display: flex; justify-content: space-between; align-items: flex-start; }
         .shop-name { font-size: 13pt; font-weight: 800; letter-spacing: -0.3px; }
         .shop-sub { font-size: 7.5pt; opacity: 0.8; margin-top: 2px; }
