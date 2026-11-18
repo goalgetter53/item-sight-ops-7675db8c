@@ -108,7 +108,7 @@ function Inventory2() {
               >
                 <button type="button" onClick={() => drillInto(n)} className="block w-full text-left">
                   <img
-                    src={n.image_url || `https://placehold.co/320x200?text=${encodeURIComponent(n.name)}`}
+                    src={n.image_url || (path.length === 1 && n.name.toUpperCase().includes("PLY") ? "/ply-default.png" : `https://placehold.co/320x200?text=${encodeURIComponent(n.name)}`)}
                     alt={n.name}
                     className="aspect-[8/5] w-full bg-slate-100 object-cover"
                   />
