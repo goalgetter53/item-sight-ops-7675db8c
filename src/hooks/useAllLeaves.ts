@@ -17,14 +17,23 @@ export type AnyLeaf = {
 type RawNode = { id: string; name: string; parent_id: string | null };
 const INV_CATS: CategoryKey[] = ["PLY", "MICA", "HARDWARE"];
 
+const CAT_MAP: Record<string, CategoryKey> = {
+  ply: "PLY", PLY: "PLY",
+  mica: "MICA", MICA: "MICA",
+  hardware: "HARDWARE", Hardware: "HARDWARE", HARDWARE: "HARDWARE",
+  door: "DOOR", Door: "DOOR", DOOR: "DOOR",
+};
+
 export function useAllLeaves() {
   return useQuery<AnyLeaf[]>({
     queryKey: ["all-leaves"],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const [nodesRes, doorsRes] = await Promise.all([
-        supabase.from("inventory_nodes").select("id, name, parent_id").order("sort"),
+      const [nodesRes, doorsRes, prodsRes, subcatsRes] = await Promise.all([
+        (supabase as any).from("inventory_nodes").select("id, name, parent_id").order("sort"),
         supabase.from("door_types").select("id, name").eq("active", true),
+        supabase.from("products").select("id, name, category, item_group, subcategory_id").eq("active", true).order("name"),
+        supabase.from("product_subcategories").select("id, name, category").eq("active", true),
       ]);
       if (nodesRes.error) throw nodesRes.error;
 
@@ -63,6 +72,27 @@ export function useAllLeaves() {
             category: "DOOR",
           });
         }
+      }
+
+      // Products table — adds all flat inventory items (hardware, mica, ply, etc.)
+      // Build subcategory name map for prefix
+      const subMap = new Map<string, { name: string; category: string }>(
+        (subcatsRes.data ?? []).map((s: any) => [s.id, { name: s.name, category: s.category }])
+      );
+      const seenProducts = new Set<string>();
+      for (const p of (prodsRes.data ?? []) as any[]) {
+        const cat: CategoryKey = CAT_MAP[p.category] ?? "HARDWARE";
+        const itemName: string = (p.item_group || p.name) as string;
+        const sub = p.subcategory_id ? subMap.get(p.subcategory_id) : null;
+        // fullName = "SubcatName ItemName" or just ItemName
+        const fullName = sub ? `${sub.name} ${itemName}`.trim() : itemName;
+        if (seenProducts.has(fullName)) continue;
+        seenProducts.add(fullName);
+        leaves.push({
+          path: [{ id: p.id, name: fullName }],
+          fullName,
+          category: cat,
+        });
       }
 
       return leaves;

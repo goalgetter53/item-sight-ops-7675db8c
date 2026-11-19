@@ -10,7 +10,7 @@ export function useAllHardwareLeaves() {
     queryKey: ["hw-leaves"],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("inventory_nodes")
         .select("id, name, parent_id")
         .order("sort");

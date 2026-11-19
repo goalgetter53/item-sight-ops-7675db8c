@@ -40,7 +40,7 @@ const HINDI_NUMS: Record<string, string> = {
   // 17
   satra: "17", satrah: "17", satraah: "17", seventeen: "17",
   // 18
-  atharah: "18", athaarah: "18", athra: "18", aathra: "18", atra: "18", aatra: "18", aathara: "18", athara: "18", eighteen: "18",
+  atharah: "18", athaarah: "18", athra: "18", aathra: "18", atra: "18", attra: "18", aatra: "18", aathara: "18", athara: "18", atharaha: "18", aatharaha: "18", eighteen: "18",
   // 19
   unees: "19", unnees: "19", unnis: "19", nineteen: "19",
   // 20
@@ -333,8 +333,26 @@ function expandDimCodes(s: string): string {
   return s.replace(/\b([6-9])([3-4])\b/g, "$1 $2");
 }
 
+// Hindi number words used as prefixes (for splitting merged tokens)
+const HINDI_NUM_PREFIXES = "atharah|athaarah|athra|aathra|atra|attra|aatra|athara|aathara|bara[h]?|baara[h]?|tera[h]?|choda|pandrah?|pandra|sola[h]?|satra[h]?|unees|unnees|bees|gyara[h]?|das|nau|aath?|aat|saat?h?|chhe|paanch?|panch|chhar|chaar|char|teen|tin|doh?|ek|ikk?";
+const HINDI_NUM_PREFIX_RE = new RegExp(`\\b(${HINDI_NUM_PREFIXES})(mm|cm|kg|inch|inchi|inchee)`, "g");
+
+// Telugu/Indian-language postpositions that STT appends to item words
+// Only strip when the base word is long enough (5+ chars) to avoid eating real words
+// e.g. "kundi" must NOT lose "di" — "kundi" is itself the word
+// Safe pattern: strip suffix only when base ≥ 5 chars
+const TELUGU_SUFFIX_RE = /\b(\w{5,})(thi|ki|ku|laa|lee)\b/g;
+
 export function preprocess(raw: string): string {
   let s = raw.toLowerCase().trim();
+  // 0pre. Split digit+unit: "18mm" → "18 mm", "12kg" → "12 kg"
+  s = s.replace(/(\d+)(mm|cm|kg|inch|inchi|inchee)/g, "$1 $2");
+  // 0. Strip Telugu/Kannada postposition suffixes: "trollythi" → "trolly", "fevicolki" → "fevicol"
+  s = s.replace(TELUGU_SUFFIX_RE, "$1");
+  // 0b. Split Hindi-num merged with unit: "barahmm" → "bara mm", "athrainch" → "athra inch"
+  s = s.replace(HINDI_NUM_PREFIX_RE, "$1 $2");
+  // 0c. Strip common filler words
+  s = s.replace(/\b(chahiye|lao|lana|dena|wala|wali|ka|ki|ke|hai|tha|mujhe|please|aur|bhaiya|bhai|yaar|boss|sir)\b/g, "");
   // 1. Normalize dimension separators: "8*4" → "8 4", "8×4" → "8 4", digit-x-digit
   s = s.replace(/(\d+)\s*[*×]\s*(\d+)/g, "$1 $2");
   s = s.replace(/\b(\d+)\s*x\s*(\d+)\b/g, "$1 $2");
@@ -351,12 +369,14 @@ export function preprocess(raw: string): string {
   //   "aathteen"/"atteen" = aath+teen = 8 3
   //   "chechar"/"chechar" = chhe+char = 6 4
   //   "cheteen" = chhe+teen = 6 3
-  s = s.replace(/\bsaatch[ao][ro]?\b/g, "7 4");
-  s = s.replace(/\bsatch[ao][ro]?\b/g, "7 4");
+  s = s.replace(/\bsaatch[ao]a?r?\b/g, "7 4");
+  s = s.replace(/\bsatch[ao]a?r?\b/g, "7 4");
   s = s.replace(/\bsacch[ao]\b/g, "7 4");
   s = s.replace(/\bsacha\b/g, "7 4");
-  s = s.replace(/\baathch[ao][ro]?\b/g, "8 4");
-  s = s.replace(/\baatch[ao][ro]?\b/g, "8 4");
+  s = s.replace(/\baathch[ao]a?r?\b/g, "8 4");
+  s = s.replace(/\baatch[ao]a?r?\b/g, "8 4");
+  s = s.replace(/\baat\s*c[ao]a?r?\b/g, "8 4");   // aatcaar / aatcor
+  s = s.replace(/\bsaat\s*c[ao]a?r?\b/g, "7 4");  // saatcaar / saatcor
   s = s.replace(/\bsaat\s*te+n\b/g, "7 3");
   s = s.replace(/\bsat\s*te+n\b/g, "7 3");
   s = s.replace(/\baath\s*te+n\b/g, "8 3");
@@ -406,7 +426,6 @@ function jaroWinkler(a: string, b: string): number {
 
 // ─── Main scoring ─────────────────────────────────────────────────────────────
 function scoreOne(queryRaw: string, candidateRaw: string): number {
-  // Try both raw and phonetically normalized versions; take the best
   const variants = [
     [preprocess(queryRaw), preprocess(candidateRaw)],
     [applyPhonetics(preprocess(queryRaw)), applyPhonetics(preprocess(candidateRaw))],
@@ -420,10 +439,19 @@ function scoreOne(queryRaw: string, candidateRaw: string): number {
     const allClose = qW.length > 0 && qW.every((w) =>
       cW.some((cw) => cw === w || jaroWinkler(w, cw) > 0.80)
     );
-    const score = allClose ? 0.85 + jaroWinkler(q, c) * 0.1 : jaroWinkler(q, c);
+    let score = allClose ? 0.85 + jaroWinkler(q, c) * 0.1 : jaroWinkler(q, c);
+    // Digit-token tiebreak: single-digit tokens (dimensions like "7","8","3","4")
+    // must match exactly. Mismatch penalty > boost so wrong digit loses.
+    const qDigits = qW.filter(w => /^\d{1,2}$/.test(w));
+    for (const d of qDigits) {
+      const cHasExact = cW.includes(d);
+      const cHasDiff  = cW.some(cw => /^\d{1,2}$/.test(cw) && cw !== d);
+      if (cHasExact) score += 0.01;
+      if (cHasDiff)  score -= 0.02;  // stronger penalty than boost
+    }
     if (score > best) best = score;
   }
-  return best;
+  return Math.min(1, best);
 }
 
 export type VoiceMapEntry = { item_name: string; category: string; heard_text: string };
