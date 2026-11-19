@@ -122,11 +122,14 @@ const SYNONYMS: Array<[RegExp, string]> = [
   [/\bdraver\b/g, "drawer"],
   [/\bslaid\b/g, "slide"],
   [/\bchainal\b/g, "channel"],
+  [/\bchenal\b/g, "channel"],
+  [/\bchanel\b/g, "channel"],
 
-  // Trolley wheel
-  [/\btroley\b/g, "trolley"],
-  [/\btroli\b/g, "trolley"],
-  [/\btrole\b/g, "trolley"],
+  // Trolley — normalize all variants to "trolly" (inventory spelling)
+  [/\btrolley\b/g, "trolly"],
+  [/\btroley\b/g, "trolly"],
+  [/\btroli\b/g, "trolly"],
+  [/\btrole\b/g, "trolly"],
   [/\bwheel\b/g, "wheel"],
   [/\bvheel\b/g, "wheel"],
 
@@ -203,6 +206,39 @@ const SYNONYMS: Array<[RegExp, string]> = [
   [/\binchi\b/g, "inch"],
   [/\binchee\b/g, "inch"],
   [/\binci\b/g, "inch"],
+
+  // Birangee (type of nail/fastener) — STT often drops the ending vowel
+  [/\bbirangi\b/g, "birangee"],
+  [/\bbirangy\b/g, "birangee"],
+  [/\bbirangie\b/g, "birangee"],
+  [/\bverangi\b/g, "birangee"],
+  [/\bvirangi\b/g, "birangee"],
+
+  // Jali (mesh/grill) — workers say "jaali" with long vowel
+  [/\bjaali\b/g, "jali"],
+  [/\bjhaali\b/g, "jali"],
+  [/\bjhali\b/g, "jali"],
+
+  // Corby — additional STT variants
+  [/\bkorby\b/g, "corby"],
+  [/\bcorbi\b/g, "corby"],
+
+  // Perporated — inventory misspelling; normalize both sides so "perforated" matches
+  [/\bperporated\b/g, "perforated"],
+  [/\bparphorated\b/g, "perforated"],
+  [/\bperforated\b/g, "perforated"],
+
+  // Fevicol — extra STT variants
+  [/\bfewicol\b/g, "fevicol"],
+  [/\bfevicoal\b/g, "fevicol"],
+
+  // BWP / MDF — spoken as letters, STT sometimes adds spaces
+  [/\bb\s*w\s*p\b/g, "bwp"],
+  [/\bm\s*d\s*f\b/g, "mdf"],
+
+  // Auto close / auto hings variants
+  [/\bauto\s*hing\b/g, "auto hings"],
+  [/\bauto\s*hinges\b/g, "auto hings"],
 ];
 
 // ─── Phonetic normalization ───────────────────────────────────────────────────
