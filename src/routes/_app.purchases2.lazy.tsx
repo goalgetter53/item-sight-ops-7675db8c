@@ -9,13 +9,15 @@ import { useAuth } from "@/lib/auth-store";
 import { PurchaseItemDialog, type PurchaseItem } from "@/components/erp/PurchaseItemDialog";
 import { adjustComboStock, type ComboCategory } from "@/lib/comboStock";
 import { plyDefault, micaDefault, hardwareDefault } from "@/lib/tile-images";
-import { Plus, Trash2, Check, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Check, ArrowLeft, DoorOpen } from "lucide-react";
 import { VoiceSearchPicker } from "@/components/erp/VoiceSearchPicker";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export const Route = createLazyFileRoute("/_app/purchases2")({ component: Purchase2 });
 
-type Line = { key: string; name: string; category: ComboCategory; qty: number; rate: number; gst_rate: number };
+type Line = { key: string; name: string; category: ComboCategory | "DOOR"; qty: number; rate: number; gst_rate: number };
 const TILES: ComboCategory[] = ["PLY", "MICA", "HARDWARE"];
 const todayLocal = () => new Date().toISOString().slice(0, 10);
 
@@ -32,6 +34,12 @@ function Purchase2() {
   const [discount, setDiscount] = useState(0);
   const [lines, setLines] = useState<Line[]>([]);
   const [wizard, setWizard] = useState<ComboCategory | null>(null);
+  const [doorChooserOpen, setDoorChooserOpen] = useState(false);
+  const [doorAddOpen, setDoorAddOpen] = useState(false);
+  const [doorAddType, setDoorAddType] = useState<"custom" | "wpc">("custom");
+  const [doorAddName, setDoorAddName] = useState("");
+  const [doorAddQty, setDoorAddQty] = useState(1);
+  const [doorAddRate, setDoorAddRate] = useState(0);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -71,8 +79,20 @@ function Purchase2() {
       if (pErr) throw pErr;
 
       for (const l of lines) {
+        let pid: string;
+        if (l.category === "DOOR") {
+          const { data: existing } = await supabase.from("products").select("id").eq("prefix", "DOOR").limit(1).single();
+          if (existing) {
+            pid = existing.id;
+          } else {
+            const { data: created, error: ce } = await supabase.from("products").insert({ name: "Door (Custom)", prefix: "DOOR", category: "door" as any, active: true }).select("id").single();
+            if (ce) throw ce;
+            pid = created!.id;
+          }
+        } else {
         // Resolve/create the combo product and add its stock (+qty) in one call.
-        const pid = await adjustComboStock(l.name, l.category, l.qty);
+        pid = await adjustComboStock(l.name, l.category as ComboCategory, l.qty);
+        }
         const { error: piErr } = await supabase.from("purchase_items").insert({
           purchase_id: pur.id, product_id: pid, qty: l.qty, rate: l.rate,
           gst_rate: billType === "gst" ? l.gst_rate : 0, line_total: l.qty * l.rate,
@@ -151,7 +171,7 @@ function Purchase2() {
         </div>
 
         {/* Tiles */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           {TILES.map((t) => (
             <button key={t} type="button" onClick={() => setWizard(t)}
               className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]">
@@ -159,6 +179,11 @@ function Purchase2() {
               <span className="py-2 text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{t}</span>
             </button>
           ))}
+          <button type="button" onClick={() => setDoorChooserOpen(true)}
+            className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#7c3aed] hover:shadow-md active:scale-[0.98] h-full min-h-[108px]">
+            <DoorOpen className="h-10 w-10 text-[#7c3aed] group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#7c3aed]">DOOR</span>
+          </button>
         </div>
 
         {/* Lines */}
@@ -214,6 +239,55 @@ function Purchase2() {
       </div>
 
       <PurchaseItemDialog category={wizard} open={wizard !== null} onOpenChange={(v) => !v && setWizard(null)} onAdd={addItem} />
+
+      {/* Door chooser */}
+      <Dialog open={doorChooserOpen} onOpenChange={setDoorChooserOpen}>
+        <DialogContent className="max-w-xs rounded-2xl p-6">
+          <DialogTitle className="text-base font-extrabold text-slate-900 mb-4">Add Door</DialogTitle>
+          <div className="grid grid-cols-2 gap-3">
+            <button type="button" onClick={() => { setDoorChooserOpen(false); setDoorAddType("custom"); setDoorAddName("Custom Door"); setDoorAddQty(1); setDoorAddRate(0); setDoorAddOpen(true); }}
+              className="flex flex-col items-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white p-4 shadow-sm hover:border-[#7c3aed] hover:shadow-md active:scale-[0.97] transition-all">
+              <DoorOpen className="h-8 w-8 text-[#7c3aed]" />
+              <span className="text-sm font-bold text-slate-700">Custom Door</span>
+            </button>
+            <button type="button" onClick={() => { setDoorChooserOpen(false); setDoorAddType("wpc"); setDoorAddName("WPC Door"); setDoorAddQty(1); setDoorAddRate(0); setDoorAddOpen(true); }}
+              className="flex flex-col items-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white p-4 shadow-sm hover:border-[#7c3aed] hover:shadow-md active:scale-[0.97] transition-all">
+              <DoorOpen className="h-8 w-8 text-[#7c3aed]" />
+              <span className="text-sm font-bold text-slate-700">WPC Door</span>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Door entry */}
+      <Dialog open={doorAddOpen} onOpenChange={setDoorAddOpen}>
+        <DialogContent className="max-w-xs rounded-2xl p-6">
+          <DialogTitle className="text-base font-extrabold text-slate-900 mb-4">
+            {doorAddType === "wpc" ? "WPC Door" : "Custom Door"}
+          </DialogTitle>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs font-semibold text-slate-600 mb-1 block">Description</Label>
+              <Input value={doorAddName} onChange={(e) => setDoorAddName(e.target.value)} placeholder="Door name / spec" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs font-semibold text-slate-600 mb-1 block">Qty</Label>
+                <Input type="number" min={1} value={doorAddQty} onChange={(e) => setDoorAddQty(Math.max(1, Number(e.target.value || 1)))} />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold text-slate-600 mb-1 block">Rate (₹)</Label>
+                <Input type="number" min={0} value={doorAddRate} onChange={(e) => setDoorAddRate(Number(e.target.value || 0))} />
+              </div>
+            </div>
+            <Button className="w-full" onClick={() => {
+              if (!doorAddName.trim()) return toast.error("Enter a description");
+              setLines((p) => [...p, { key: crypto.randomUUID(), name: doorAddName.trim(), category: "DOOR", qty: doorAddQty, rate: doorAddRate, gst_rate: 18 }]);
+              setDoorAddOpen(false);
+            }}>Add</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
