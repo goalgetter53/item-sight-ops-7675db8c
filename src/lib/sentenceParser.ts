@@ -118,8 +118,41 @@ function extractQty(tokens: string[]): { qty: number; rest: string[] } {
 // ── Hindi number normalisation ────────────────────────────────────────────────
 // Replace Hindi/English number words in a string with their digit equivalents.
 // "aath chaar" → "8 4", "velocity 18mm aath chaar" → "velocity 18mm 8 4"
+// ── Fraction / decimal vocabulary ────────────────────────────────────────────
+// single-word Hindi fraction terms → decimal string
+function expandFractionSingles(s: string): string {
+  return s
+    .replace(/\bdedh\b/gi, "1.5")
+    .replace(/\bdaid\b/gi, "1.5")
+    .replace(/\bdaad\b/gi, "1.5")
+    .replace(/\bdhai\b/gi, "2.5")
+    .replace(/\bdhaai\b/gi, "2.5")
+    .replace(/\bdhaa\b/gi, "2.5")
+    .replace(/\baadha\b/gi, "0.5")
+    .replace(/\baadhi\b/gi, "0.5")
+    .replace(/\baadh\b/gi, "0.5")
+    .replace(/\bhalf\b/gi, "0.5")
+    .replace(/\bpaav\b/gi, "0.25")
+    .replace(/\bpaava\b/gi, "0.25")
+    .replace(/\bquarter\b/gi, "0.25")
+    .replace(/\bteen\s+paav\b/gi, "0.75");
+}
+
+// multi-word combos — run after number-word substitution
+function expandFractionCombos(s: string): string {
+  s = s.replace(/\b(?:sawa|savaa)\s+(\d+(?:\.\d+)?)/g,
+    (_, n) => String(Math.round((parseFloat(n) + 0.25) * 100) / 100));
+  s = s.replace(/\b(?:saadhe|saadha|sadhe)\s+(\d+(?:\.\d+)?)/g,
+    (_, n) => String(Math.round((parseFloat(n) + 0.5) * 100) / 100));
+  s = s.replace(/\b(?:paune|pauney)\s+(\d+(?:\.\d+)?)/g,
+    (_, n) => String(Math.round((parseFloat(n) - 0.25) * 100) / 100));
+  s = s.replace(/\b(?:paune|pauney)\b/g, "0.75");
+  return s;
+}
+
 export function replaceHindiNums(text: string): string {
-  return text
+  let s = expandFractionSingles(text);
+  s = s
     .split(/\s+/)
     .map((w) => {
       const n = HINDI_NUM[w.toLowerCase()];
@@ -127,6 +160,7 @@ export function replaceHindiNums(text: string): string {
     })
     .join(" ")
     .trim();
+  return expandFractionCombos(s);
 }
 
 // ── Segment splitting ─────────────────────────────────────────────────────────

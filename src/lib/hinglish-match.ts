@@ -240,6 +240,51 @@ function applySynonyms(s: string): string {
   return r;
 }
 
+// ─── Fraction / decimal vocabulary ───────────────────────────────────────────
+// Step 1: replace single-word fraction terms before number-word substitution
+function expandFractionSingles(s: string): string {
+  return s
+    // Standalone special fractions
+    .replace(/\bdedh\b/g, "1.5")
+    .replace(/\bdaid\b/g, "1.5")
+    .replace(/\bdaad\b/g, "1.5")
+    .replace(/\bdhai\b/g, "2.5")
+    .replace(/\bdhaai\b/g, "2.5")
+    .replace(/\bdhaa\b/g, "2.5")
+    // half
+    .replace(/\baadha\b/g, "0.5")
+    .replace(/\baadhi\b/g, "0.5")
+    .replace(/\baadh\b/g, "0.5")
+    .replace(/\bhalf\b/g, "0.5")
+    // quarter
+    .replace(/\bpaav\b/g, "0.25")
+    .replace(/\bpaava\b/g, "0.25")
+    .replace(/\bpaao\b/g, "0.25")
+    .replace(/\bquarter\b/g, "0.25")
+    // three-quarter (teen paav before number replacement)
+    .replace(/\bteen\s+paav\b/g, "0.75")
+    .replace(/\bteen\s+paava\b/g, "0.75");
+}
+
+// Step 2: multi-word fraction combos — run AFTER replaceHindiNums so numbers are digits
+// sawa N  = N + 0.25  (sawa do = 2.25)
+// saadhe N = N + 0.5  (saadhe teen = 3.5)
+// paune/pauney N = N − 0.25  (paune do = 1.75)
+function expandFractionCombos(s: string): string {
+  // sawa / savaa
+  s = s.replace(/\b(?:sawa|savaa)\s+(\d+(?:\.\d+)?)/g,
+    (_, n) => String(Math.round((parseFloat(n) + 0.25) * 100) / 100));
+  // saadhe / saadha
+  s = s.replace(/\b(?:saadhe|saadha|sadhe)\s+(\d+(?:\.\d+)?)/g,
+    (_, n) => String(Math.round((parseFloat(n) + 0.5) * 100) / 100));
+  // paune / pauney before a digit
+  s = s.replace(/\b(?:paune|pauney)\s+(\d+(?:\.\d+)?)/g,
+    (_, n) => String(Math.round((parseFloat(n) - 0.25) * 100) / 100));
+  // standalone paune/pauney = 0.75
+  s = s.replace(/\b(?:paune|pauney)\b/g, "0.75");
+  return s;
+}
+
 // Expand 2-digit dimension codes that STT produces when Hindi numbers are merged:
 // "84" → "8 4" (aath chaar = 8×4 feet ply sheet)
 // Covers common ply sheet sizes: 6×3, 6×4, 7×3, 7×4, 8×3, 8×4
@@ -249,13 +294,17 @@ function expandDimCodes(s: string): string {
 
 function preprocess(raw: string): string {
   let s = raw.toLowerCase().trim();
-  // Normalize dimension separators before anything else:
-  // "8*4" → "8 4", "8×4" → "8 4", "8x4" → "8 4" (digit-x-digit only)
+  // 1. Normalize dimension separators: "8*4" → "8 4", "8×4" → "8 4", digit-x-digit
   s = s.replace(/(\d+)\s*[*×]\s*(\d+)/g, "$1 $2");
   s = s.replace(/\b(\d+)\s*x\s*(\d+)\b/g, "$1 $2");
+  // 2. Single-word fractions (dedh, dhai, aadha, paav…) before number-word map
+  s = expandFractionSingles(s);
+  // 3. Hindi number words → digits
   s = replaceHindiNums(s);
+  // 4. Multi-word fraction combos (sawa 2 → 2.25, saadhe 3 → 3.5, paune 4 → 3.75)
+  s = expandFractionCombos(s);
+  // 5. Synonyms + dimension code splits
   s = applySynonyms(s);
-  // Expand merged dimension codes ("84" → "8 4") after Hindi num replacement
   s = expandDimCodes(s);
   return s;
 }
