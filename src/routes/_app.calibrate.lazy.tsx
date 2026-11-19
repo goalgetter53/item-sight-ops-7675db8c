@@ -103,20 +103,17 @@ function CalibratePage() {
     r.start();
   }, [leaves]);
 
-  function handleSaveAttempt(attempt: Attempt) {
+  async function handleSaveAttempt(attempt: Attempt) {
     if (!current) return;
-    save.mutate(
-      { item_name: current.fullName, category: current.category, raw_text: attempt.raw },
-      {
-        onSuccess: () => {
-          toast.success("Saved pronunciation!");
-          setAttempts((prev) =>
-            prev.map((a) => a.raw === attempt.raw ? { ...a, saved: true } : a)
-          );
-        },
-        onError: () => toast.error("Save failed"),
-      }
-    );
+    try {
+      await save.mutateAsync({ item_name: current.fullName, category: current.category, raw_text: attempt.raw });
+      toast.success("Saved pronunciation!");
+      setAttempts((prev) =>
+        prev.map((a) => a.raw === attempt.raw ? { ...a, saved: true } : a)
+      );
+    } catch (err: any) {
+      toast.error(`Save failed: ${err?.message ?? JSON.stringify(err)}`);
+    }
   }
 
   function advance() {
@@ -251,7 +248,7 @@ function CalibratePage() {
                     <p className="text-xs text-muted-foreground">
                       Wrong match — try again, or force-save if you know it's right.
                     </p>
-                    <Button size="sm" variant="outline" onClick={() => handleSaveAttempt(latest)} disabled={save.isPending} className="shrink-0 text-xs h-7">
+                    <Button size="sm" variant="outline" onClick={() => handleSaveAttempt(latest)} className="shrink-0 text-xs h-7">
                       Force save
                     </Button>
                   </div>
