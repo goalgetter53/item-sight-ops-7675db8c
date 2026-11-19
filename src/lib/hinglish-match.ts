@@ -3,14 +3,78 @@ import type { InvNode } from "@/lib/inventoryNodes";
 export type HardwareLeaf = { path: InvNode[]; fullName: string };
 
 // ─── Hindi number words ───────────────────────────────────────────────────────
+// Comprehensive Indian pronunciation variants (Hindi, Punjabi, Hinglish)
 const HINDI_NUMS: Record<string, string> = {
-  ek: "1", do: "2", teen: "3", char: "4", paanch: "5", panch: "5",
-  chhe: "6", chhah: "6", saath: "7", sat: "7", aath: "8", ath: "8",
-  nau: "9", nav: "9", das: "10",
-  gyara: "11", bara: "12", tera: "13", choda: "14", chaudah: "14",
-  pandra: "15", sola: "16", satra: "17", athra: "18", unees: "19",
-  bees: "20", tees: "30", chalis: "40", pachas: "50",
-  saath_number: "70", assi: "80", nabbe: "90",
+  // 1
+  ek: "1", ik: "1", ikk: "1", one: "1",
+  // 2
+  do: "2", doh: "2", two: "2",
+  // 3
+  teen: "3", tin: "3", tiin: "3", three: "3",
+  // 4
+  char: "4", chaar: "4", chhar: "4", four: "4",
+  // 5
+  paanch: "5", panch: "5", pach: "5", paach: "5", five: "5",
+  // 6
+  chhe: "6", chhah: "6", chheh: "6", cheh: "6", six: "6",
+  // 7
+  saat: "7", saath: "7", sat: "7", satt: "7", seven: "7",
+  // 8
+  aath: "8", aat: "8", ath: "8", att: "8", eight: "8",
+  // 9
+  nau: "9", noh: "9", nav: "9", nava: "9", nine: "9",
+  // 10
+  das: "10", duss: "10", ten: "10",
+  // 11
+  gyara: "11", gyarah: "11", egara: "11", agara: "11", eleven: "11",
+  // 12
+  bara: "12", baara: "12", barah: "12", baarah: "12", twelve: "12",
+  // 13
+  tera: "13", terah: "13", thirteen: "13",
+  // 14
+  choda: "14", chaudah: "14", chowdah: "14", fourteen: "14",
+  // 15
+  pandra: "15", pandrah: "15", pandara: "15", fifteen: "15",
+  // 16
+  sola: "16", solah: "16", sixteen: "16",
+  // 17
+  satra: "17", satrah: "17", satraah: "17", seventeen: "17",
+  // 18
+  atharah: "18", athaarah: "18", athra: "18", aathara: "18", eighteen: "18",
+  // 19
+  unees: "19", unnees: "19", unnis: "19", nineteen: "19",
+  // 20
+  bees: "20", biss: "20", twenty: "20",
+  // 24
+  chaubees: "24", chauvis: "24",
+  // 25
+  pachees: "25", pachis: "25",
+  // 30
+  tees: "30", tiis: "30", thirty: "30",
+  // 32
+  battees: "32", batees: "32",
+  // 36
+  chattees: "36", chatees: "36",
+  // 40
+  chalis: "40", chaalis: "40", forty: "40",
+  // 48
+  attaalis: "48",
+  // 50
+  pachas: "50", pachass: "50", fifty: "50",
+  // 60
+  saath60: "60", satth: "60", sath: "60", sixty: "60",
+  // 70
+  sattar: "70", seventy: "70",
+  // 72
+  bahattar: "72", bahatar: "72",
+  // 75
+  pachhattar: "75", pachattar: "75",
+  // 80
+  assi: "80", asee: "80", eighty: "80",
+  // 90
+  nabbe: "90", nabee: "90", nabe: "90", ninety: "90",
+  // 100
+  sau: "100", so: "100",
 };
 
 // ─── Hinglish synonym/alias map ───────────────────────────────────────────────
@@ -176,10 +240,23 @@ function applySynonyms(s: string): string {
   return r;
 }
 
+// Expand 2-digit dimension codes that STT produces when Hindi numbers are merged:
+// "84" → "8 4" (aath chaar = 8×4 feet ply sheet)
+// Covers common ply sheet sizes: 6×3, 6×4, 7×3, 7×4, 8×3, 8×4
+function expandDimCodes(s: string): string {
+  return s.replace(/\b([6-9])([3-4])\b/g, "$1 $2");
+}
+
 function preprocess(raw: string): string {
   let s = raw.toLowerCase().trim();
+  // Normalize dimension separators before anything else:
+  // "8*4" → "8 4", "8×4" → "8 4", "8x4" → "8 4" (digit-x-digit only)
+  s = s.replace(/(\d+)\s*[*×]\s*(\d+)/g, "$1 $2");
+  s = s.replace(/\b(\d+)\s*x\s*(\d+)\b/g, "$1 $2");
   s = replaceHindiNums(s);
   s = applySynonyms(s);
+  // Expand merged dimension codes ("84" → "8 4") after Hindi num replacement
+  s = expandDimCodes(s);
   return s;
 }
 
