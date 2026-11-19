@@ -47,13 +47,11 @@ function PrintQueueInner() {
   const [online, setOnline] = useState(true);
   const printedRef = useRef(getLocalPrinted());
 
-  // Guard — only printer role
   useEffect(() => {
     if (user && user.role !== "printer") nav({ to: "/login" });
     if (!user) nav({ to: "/login" });
   }, [user, nav]);
 
-  // Load all bills
   const loadBills = async () => {
     const printed = getLocalPrinted();
     printedRef.current = printed;
@@ -69,14 +67,12 @@ function PrintQueueInner() {
 
   useEffect(() => { loadBills(); }, []);
 
-  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel("print-queue-sales")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "sales" }, async (payload) => {
         setOnline(true);
         const row = payload.new as any;
-        // Fetch customer name
         let customerName = "Walk-in customer";
         if (row.customer_id) {
           const { data } = await supabase.from("customers").select("name").eq("id", row.customer_id).single();
@@ -92,7 +88,6 @@ function PrintQueueInner() {
           printed: false,
         };
         setBills((prev) => [newBill, ...prev]);
-        // Auto-print
         setTimeout(() => { openPrintWindow(row.id); setBills((prev) => prev.map((b) => b.id === row.id ? { ...b, printed: true } : b)); }, 300);
         toast.success(`New bill ${row.invoice_no} — auto-printing`);
       })
@@ -102,7 +97,6 @@ function PrintQueueInner() {
     return () => { void supabase.removeChannel(channel); };
   }, []);
 
-  // Track online/offline
   useEffect(() => {
     const on = () => { setOnline(true); loadBills(); };
     const off = () => setOnline(false);
@@ -120,40 +114,62 @@ function PrintQueueInner() {
   const printed = bills.filter((b) => b.printed);
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#0f172a", color: "#f8fafc", fontFamily: "system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
+    <div className="min-h-dvh bg-[#f4f6f9] flex flex-col" style={{ fontFamily: "system-ui, sans-serif" }}>
+
       {/* Top bar */}
-      <div style={{ background: "#1e293b", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #334155" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Printer size={22} color="#60a5fa" />
-          <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.3px" }}>National Hardware — Print Station</span>
+      <header className="bg-white border-b border-[#e8ecf1] shadow-sm px-5 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#3b82f6]/10">
+            <Printer className="h-5 w-5 text-[#3b82f6]" />
+          </div>
+          <div>
+            <div className="font-extrabold text-slate-900 text-base leading-tight">Print Station</div>
+            <div className="text-xs text-slate-400 leading-tight">Auto-prints new bills in real time</div>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12 }}>
+        <div className="flex items-center gap-4">
+          <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${online ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
             {online
-              ? <><Wifi size={14} color="#4ade80" /><span style={{ color: "#4ade80" }}>Live</span></>
-              : <><WifiOff size={14} color="#f87171" /><span style={{ color: "#f87171" }}>Offline</span></>}
+              ? <><Wifi className="h-3.5 w-3.5" />Live</>
+              : <><WifiOff className="h-3.5 w-3.5" />Offline</>}
           </div>
           <button
             onClick={() => { logout(); nav({ to: "/login" }); }}
-            style={{ display: "flex", alignItems: "center", gap: 5, background: "transparent", border: "1px solid #475569", color: "#94a3b8", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-500 border border-[#e8ecf1] hover:border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors"
           >
-            <LogOut size={12} /> Sign out
+            <LogOut className="h-3.5 w-3.5" /> Sign out
           </button>
+        </div>
+      </header>
+
+      {/* Summary strip */}
+      <div className="px-5 py-3 flex items-center gap-4">
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-xl text-sm font-bold">
+          <Clock className="h-4 w-4" />
+          {pending.length} pending
+        </div>
+        <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-xl text-sm font-bold">
+          <CheckCircle2 className="h-4 w-4" />
+          {printed.length} printed today
         </div>
       </div>
 
-      {/* Queue columns */}
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, overflow: "hidden" }}>
-        {/* Pending */}
-        <div style={{ borderRight: "1px solid #1e293b", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ padding: "10px 16px", background: "#1e293b", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #334155" }}>
-            <Clock size={15} color="#facc15" />
-            <span style={{ fontWeight: 700, fontSize: 13, color: "#facc15" }}>Pending</span>
-            <span style={{ marginLeft: "auto", background: "#854d0e", color: "#fef08a", borderRadius: 20, padding: "1px 8px", fontSize: 11, fontWeight: 700 }}>{pending.length}</span>
+      {/* Two-column queue */}
+      <div className="flex-1 grid grid-cols-2 gap-4 px-5 pb-6 overflow-hidden">
+
+        {/* Pending column */}
+        <div className="flex flex-col rounded-2xl border border-[#e8ecf1] bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#e8ecf1] bg-amber-50">
+            <Clock className="h-4 w-4 text-amber-600" />
+            <span className="font-extrabold text-amber-700 text-sm">Pending</span>
+            <span className="ml-auto bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2.5 py-0.5 text-xs font-bold">{pending.length}</span>
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
             {pending.length === 0 && (
-              <div style={{ textAlign: "center", color: "#475569", marginTop: 40, fontSize: 13 }}>No pending bills</div>
+              <div className="flex flex-col items-center justify-center h-32 text-slate-400 text-sm gap-2">
+                <CheckCircle2 className="h-7 w-7 text-slate-300" />
+                All caught up!
+              </div>
             )}
             {pending.map((b) => (
               <BillCard key={b.id} bill={b} onPrint={handlePrint} />
@@ -161,16 +177,16 @@ function PrintQueueInner() {
           </div>
         </div>
 
-        {/* Printed */}
-        <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ padding: "10px 16px", background: "#1e293b", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #334155" }}>
-            <CheckCircle2 size={15} color="#4ade80" />
-            <span style={{ fontWeight: 700, fontSize: 13, color: "#4ade80" }}>Printed</span>
-            <span style={{ marginLeft: "auto", background: "#14532d", color: "#86efac", borderRadius: 20, padding: "1px 8px", fontSize: 11, fontWeight: 700 }}>{printed.length}</span>
+        {/* Printed column */}
+        <div className="flex flex-col rounded-2xl border border-[#e8ecf1] bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#e8ecf1] bg-green-50">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <span className="font-extrabold text-green-700 text-sm">Printed</span>
+            <span className="ml-auto bg-green-100 text-green-700 border border-green-200 rounded-full px-2.5 py-0.5 text-xs font-bold">{printed.length}</span>
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
             {printed.length === 0 && (
-              <div style={{ textAlign: "center", color: "#475569", marginTop: 40, fontSize: 13 }}>No printed bills yet</div>
+              <div className="text-center text-slate-400 text-sm mt-10">No printed bills yet</div>
             )}
             {printed.map((b) => (
               <BillCard key={b.id} bill={b} onPrint={handlePrint} />
@@ -184,46 +200,39 @@ function PrintQueueInner() {
 
 function BillCard({ bill, onPrint }: { bill: Bill; onPrint: (b: Bill) => void }) {
   return (
-    <div style={{
-      background: bill.printed ? "#1e293b" : "#1a3a5c",
-      border: `1px solid ${bill.printed ? "#334155" : "#2563eb"}`,
-      borderRadius: 8,
-      padding: "10px 12px",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-    }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: bill.printed ? "#94a3b8" : "#f8fafc" }}>
+    <div className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
+      bill.printed
+        ? "bg-slate-50 border-[#e8ecf1]"
+        : "bg-white border-[#3b82f6]/30 shadow-sm"
+    }`}>
+      <div className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg ${
+        bill.printed ? "bg-slate-100" : "bg-[#3b82f6]/10"
+      }`}>
+        <Printer className={`h-4 w-4 ${bill.printed ? "text-slate-400" : "text-[#3b82f6]"}`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className={`font-extrabold text-sm truncate ${bill.printed ? "text-slate-400" : "text-slate-900"}`}>
           {bill.invoice_no}
         </div>
-        <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+        <div className="text-xs text-slate-400 truncate mt-0.5">
           {bill.customers?.name ?? "Walk-in"} · {bill.payment_mode?.toUpperCase()}
         </div>
-        <div style={{ fontSize: 10, color: "#475569", marginTop: 1 }}>{fmtDateTime(bill.invoice_date)}</div>
+        <div className="text-[11px] text-slate-300 mt-0.5">{fmtDateTime(bill.invoice_date)}</div>
       </div>
-      <div style={{ textAlign: "right", flexShrink: 0 }}>
-        <div style={{ fontWeight: 800, fontSize: 14, color: bill.printed ? "#64748b" : "#60a5fa", fontVariantNumeric: "tabular-nums" }}>
+      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+        <div className={`font-extrabold text-sm tabular-nums ${bill.printed ? "text-slate-400" : "text-slate-900"}`}>
           {inr(bill.grand_total)}
         </div>
         <button
           onClick={() => onPrint(bill)}
-          style={{
-            marginTop: 5,
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            background: bill.printed ? "#334155" : "#2563eb",
-            color: "#fff",
-            border: "none",
-            borderRadius: 5,
-            padding: "4px 10px",
-            cursor: "pointer",
-            fontSize: 11,
-            fontWeight: 600,
-          }}
+          className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors ${
+            bill.printed
+              ? "bg-white text-slate-500 border-[#e8ecf1] hover:bg-slate-100"
+              : "bg-[#3b82f6] text-white border-[#3b82f6] hover:bg-blue-600"
+          }`}
         >
-          <Printer size={11} /> {bill.printed ? "Reprint" : "Print"}
+          <Printer className="h-3 w-3" />
+          {bill.printed ? "Reprint" : "Print"}
         </button>
       </div>
     </div>
