@@ -308,6 +308,23 @@ export function preprocess(raw: string): string {
     /\b(ek|ikk?|do|doh|teen|tin|char|chaar|chhar|paanch?|panch|chhe|saat?h?|aath?|aat|nau|das|gyara[h]?|bara[h]?|tera[h]?|choda|pandra[h]?|dedh|dhai|aadha?|sawa|saadhe?|paune?)inch[ie]*/g,
     "$1 inch"
   );
+  // 2aa. Split merged ply-dimension compounds (workers say sheet size as one word)
+  //   "saccha"/"sacha"/"satcha" = saat+char = 7 4
+  //   "aathcha"/"atcha" = aath+char = 8 4
+  //   "saatteen"/"satteen" = saat+teen = 7 3
+  //   "aathteen"/"atteen" = aath+teen = 8 3
+  //   "chechar"/"chechar" = chhe+char = 6 4
+  //   "cheteen" = chhe+teen = 6 3
+  s = s.replace(/\bsaatch[ao][ro]?\b/g, "7 4");
+  s = s.replace(/\bsatch[ao][ro]?\b/g, "7 4");
+  s = s.replace(/\bsacch[ao]\b/g, "7 4");
+  s = s.replace(/\bsacha\b/g, "7 4");
+  s = s.replace(/\baathch[ao][ro]?\b/g, "8 4");
+  s = s.replace(/\baatch[ao][ro]?\b/g, "8 4");
+  s = s.replace(/\bsaat\s*te+n\b/g, "7 3");
+  s = s.replace(/\bsat\s*te+n\b/g, "7 3");
+  s = s.replace(/\baath\s*te+n\b/g, "8 3");
+  s = s.replace(/\baat\s*te+n\b/g, "8 3");
   // 2b. Single-word fractions (dedh, dhai, aadha, paav…) before number-word map
   s = expandFractionSingles(s);
   // 3. Hindi number words → digits
