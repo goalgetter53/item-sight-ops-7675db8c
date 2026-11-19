@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { NumPad } from "@/components/ui/NumPad";
 import { useAllLeaves, type AnyLeaf, type CategoryKey } from "@/hooks/useAllLeaves";
 import { findTopMatches } from "@/lib/hinglish-match";
+import { useVoiceMap, type VoiceMapEntry } from "@/hooks/useVoiceMap";
 import { parseSentence, stripFillers } from "@/lib/sentenceParser";
 
 export const Route = createLazyFileRoute("/_app/trial")({
@@ -101,7 +102,7 @@ type ParsedRow = {
   match: MatchResult | null;
 };
 
-function ApproachA({ leaves }: { leaves: AnyLeaf[] }) {
+function ApproachA({ leaves, voiceMap }: { leaves: AnyLeaf[]; voiceMap: VoiceMapEntry[] }) {
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [phase, setPhase] = useState<"idle" | "listening" | "review">("idle");
 
@@ -109,7 +110,7 @@ function ApproachA({ leaves }: { leaves: AnyLeaf[] }) {
     const parsed = parseSentence(text);
     const result: ParsedRow[] = parsed.map((p, i) => {
       const matches = p.itemText.trim()
-        ? findTopMatches(p.itemText, leaves.map((l) => ({ path: l.path, fullName: l.fullName })), 1)
+        ? findTopMatches(p.itemText, leaves.map((l) => ({ path: l.path, fullName: l.fullName })), 1, voiceMap)
         : [];
       const anyLeafMatch = matches[0]
         ? (leaves.find((l) => l.fullName === matches[0].fullName && l.path[0]?.id === matches[0].path[0]?.id) ?? null)
@@ -243,7 +244,7 @@ type CartItem = {
 
 type BPhase = "voice" | "matches" | "rate";
 
-function ApproachB({ leaves }: { leaves: AnyLeaf[] }) {
+function ApproachB({ leaves, voiceMap }: { leaves: AnyLeaf[]; voiceMap: VoiceMapEntry[] }) {
   const [bPhase, setBPhase] = useState<BPhase>("voice");
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [chosen, setChosen] = useState<AnyLeaf | null>(null);
@@ -254,7 +255,7 @@ function ApproachB({ leaves }: { leaves: AnyLeaf[] }) {
 
   const onFinal = (text: string) => {
     if (!text.trim()) return;
-    const top = findTopMatches(text, leaves.map((l) => ({ path: l.path, fullName: l.fullName })), 6);
+    const top = findTopMatches(text, leaves.map((l) => ({ path: l.path, fullName: l.fullName })), 6, voiceMap);
     if (top.length === 0) return;
 
     // Enrich with category
@@ -424,6 +425,7 @@ function ApproachB({ leaves }: { leaves: AnyLeaf[] }) {
 function TrialPage() {
   const [tab, setTab] = useState<"A" | "B">("A");
   const { data: leaves = [], isLoading } = useAllLeaves();
+  const { data: voiceMap = [] } = useVoiceMap();
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
@@ -446,8 +448,8 @@ function TrialPage() {
         ))}
       </div>
 
-      {tab === "A" && <ApproachA leaves={leaves} />}
-      {tab === "B" && <ApproachB leaves={leaves} />}
+      {tab === "A" && <ApproachA leaves={leaves} voiceMap={voiceMap} />}
+      {tab === "B" && <ApproachB leaves={leaves} voiceMap={voiceMap} />}
     </div>
   );
 }

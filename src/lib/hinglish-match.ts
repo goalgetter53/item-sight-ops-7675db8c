@@ -297,7 +297,7 @@ function expandDimCodes(s: string): string {
   return s.replace(/\b([6-9])([3-4])\b/g, "$1 $2");
 }
 
-function preprocess(raw: string): string {
+export function preprocess(raw: string): string {
   let s = raw.toLowerCase().trim();
   // 1. Normalize dimension separators: "8*4" → "8 4", "8×4" → "8 4", digit-x-digit
   s = s.replace(/(\d+)\s*[*×]\s*(\d+)/g, "$1 $2");
@@ -373,11 +373,25 @@ function scoreOne(queryRaw: string, candidateRaw: string): number {
   return best;
 }
 
+export type VoiceMapEntry = { item_name: string; category: string; heard_text: string };
+
 export function findTopMatches(
   query: string,
   leaves: HardwareLeaf[],
-  n = 5
+  n = 5,
+  voiceMap?: VoiceMapEntry[]
 ): Array<HardwareLeaf & { score: number }> {
+  // 1. Check learned voice map first (compare preprocessed forms)
+  if (voiceMap?.length) {
+    const q = preprocess(query);
+    const hit = voiceMap.find((e) => e.heard_text === q || q.includes(e.heard_text) || e.heard_text.includes(q));
+    if (hit) {
+      const leaf = leaves.find((l) => l.fullName === hit.item_name);
+      if (leaf) return [{ ...leaf, score: 1.0 }];
+    }
+  }
+
+  // 2. Fuzzy match (scoreOne preprocesses internally)
   return leaves
     .map((leaf) => ({ ...leaf, score: scoreOne(query, leaf.fullName) }))
     .sort((a, b) => b.score - a.score)

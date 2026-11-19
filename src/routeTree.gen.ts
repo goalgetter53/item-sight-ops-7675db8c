@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrintQueueRouteImport } from './routes/print-queue'
 import { Route as AppAlertsRouteImport } from './routes/_app.alerts'
+import { Route as AppCalibrateRouteImport } from './routes/_app.calibrate'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppDaybookRouteImport } from './routes/_app.daybook'
 import { Route as AppDoorRouteImport } from './routes/_app.door'
@@ -71,6 +72,13 @@ const AppAlertsRoute = AppAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCalibrateRoute = AppCalibrateRouteImport.update({
+  id: '/calibrate',
+  path: '/calibrate',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() =>
+  import('./routes/_app.calibrate.lazy').then((d) => d.Route),
+)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -266,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/print-queue': typeof PrintQueueRoute
   '/alerts': typeof AppAlertsRoute
+  '/calibrate': typeof AppCalibrateRoute
   '/dashboard': typeof AppDashboardRoute
   '/daybook': typeof AppDaybookRoute
   '/door': typeof AppDoorRoute
@@ -304,6 +313,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/print-queue': typeof PrintQueueRoute
   '/alerts': typeof AppAlertsRoute
+  '/calibrate': typeof AppCalibrateRoute
   '/dashboard': typeof AppDashboardRoute
   '/daybook': typeof AppDaybookRoute
   '/door': typeof AppDoorRoute
@@ -344,6 +354,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/print-queue': typeof PrintQueueRoute
   '/_app/alerts': typeof AppAlertsRoute
+  '/_app/calibrate': typeof AppCalibrateRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/daybook': typeof AppDaybookRoute
   '/_app/door': typeof AppDoorRoute
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/print-queue'
     | '/alerts'
+    | '/calibrate'
     | '/dashboard'
     | '/daybook'
     | '/door'
@@ -422,6 +434,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/print-queue'
     | '/alerts'
+    | '/calibrate'
     | '/dashboard'
     | '/daybook'
     | '/door'
@@ -461,6 +474,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/print-queue'
     | '/_app/alerts'
+    | '/_app/calibrate'
     | '/_app/dashboard'
     | '/_app/daybook'
     | '/_app/door'
@@ -539,6 +553,13 @@ declare module '@tanstack/react-router' {
       path: '/alerts'
       fullPath: '/alerts'
       preLoaderRoute: typeof AppAlertsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/calibrate': {
+      id: '/_app/calibrate'
+      path: '/calibrate'
+      fullPath: '/calibrate'
+      preLoaderRoute: typeof AppCalibrateRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
@@ -770,6 +791,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAlertsRoute: typeof AppAlertsRoute
+  AppCalibrateRoute: typeof AppCalibrateRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDaybookRoute: typeof AppDaybookRoute
   AppDoorRoute: typeof AppDoorRoute
@@ -804,6 +826,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAlertsRoute: AppAlertsRoute,
+  AppCalibrateRoute: AppCalibrateRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDaybookRoute: AppDaybookRoute,
   AppDoorRoute: AppDoorRoute,
@@ -849,13 +872,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
