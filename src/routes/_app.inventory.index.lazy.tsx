@@ -178,10 +178,16 @@ function Inventory() {
     setEditQtyBusy(true);
     try {
       if (delta > 0) {
-        const rows = Array.from({ length: delta }, () => ({
-          product_id: editQtyProduct.id,
-          status: "available",
-        }));
+        const rows = Array.from({ length: delta }, () => {
+          const uid = crypto.randomUUID();
+          return {
+            id: uid,
+            barcode_payload: uid,
+            qr_payload: { id: uid, name: editQtyProduct.name, lot: false },
+            product_id: editQtyProduct.id,
+            status: "available",
+          };
+        });
         const { error } = await supabase.from("item_instances").insert(rows);
         if (error) throw error;
       } else if (delta < 0) {

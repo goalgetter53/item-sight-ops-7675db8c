@@ -18,7 +18,7 @@ import { EMPLOYEE_NAV_KEYS } from "@/lib/roles";
 
 const items = [
   { key: "dashboard",  to: "/dashboard",       label: "Dashboard",  icon: LayoutDashboard },
-  { key: "inventory2", to: "/inventory2",      label: "Inventory",  icon: Boxes },
+  { key: "inventory",  to: "/inventory",       label: "Inventory",  icon: Boxes },
   { key: "purchases2", to: "/purchases2",      label: "Purchases",  icon: ShoppingCart },
   { key: "purchase_returns", to: "/purchase-returns", label: "Purchase Returns", icon: RotateCcw },
   { key: "sales2",     to: "/sales2",          label: "Sales",      icon: Receipt },
