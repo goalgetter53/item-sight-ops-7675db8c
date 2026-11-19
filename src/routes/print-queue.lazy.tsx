@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 import { inr, fmtDateTime } from "@/lib/codes";
-import { Printer, Wifi, WifiOff, CheckCircle2, Clock, LogOut } from "lucide-react";
+import { Printer, Wifi, WifiOff, LogOut, Clock, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createLazyFileRoute("/print-queue")({ component: PrintQueue });
@@ -73,7 +73,7 @@ function PrintQueueInner() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "sales" }, async (payload) => {
         setOnline(true);
         const row = payload.new as any;
-        let customerName = "Walk-in customer";
+        let customerName = "Walk-in";
         if (row.customer_id) {
           const { data } = await supabase.from("customers").select("name").eq("id", row.customer_id).single();
           if (data) customerName = data.name;
@@ -88,12 +88,13 @@ function PrintQueueInner() {
           printed: false,
         };
         setBills((prev) => [newBill, ...prev]);
-        setTimeout(() => { openPrintWindow(row.id); setBills((prev) => prev.map((b) => b.id === row.id ? { ...b, printed: true } : b)); }, 300);
+        setTimeout(() => {
+          openPrintWindow(row.id);
+          setBills((prev) => prev.map((b) => b.id === row.id ? { ...b, printed: true } : b));
+        }, 300);
         toast.success(`New bill ${row.invoice_no} — auto-printing`);
       })
-      .subscribe((status) => {
-        setOnline(status === "SUBSCRIBED");
-      });
+      .subscribe((status) => { setOnline(status === "SUBSCRIBED"); });
     return () => { void supabase.removeChannel(channel); };
   }, []);
 
@@ -114,127 +115,156 @@ function PrintQueueInner() {
   const printed = bills.filter((b) => b.printed);
 
   return (
-    <div className="min-h-dvh bg-[#f4f6f9] flex flex-col" style={{ fontFamily: "system-ui, sans-serif" }}>
+    <div className="min-h-dvh flex flex-col bg-zinc-50" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
 
       {/* Top bar */}
-      <header className="bg-white border-b border-[#e8ecf1] shadow-sm px-5 py-3 flex items-center justify-between">
+      <header className="bg-zinc-900 px-6 py-0 h-14 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#3b82f6]/10">
-            <Printer className="h-5 w-5 text-[#3b82f6]" />
+          <div className="flex items-center justify-center w-7 h-7 rounded bg-white/10">
+            <Printer className="h-4 w-4 text-white" />
           </div>
           <div>
-            <div className="font-extrabold text-slate-900 text-base leading-tight">Print Station</div>
-            <div className="text-xs text-slate-400 leading-tight">Auto-prints new bills in real time</div>
+            <span className="text-white font-semibold text-sm tracking-tight">Print Station</span>
+            <span className="text-zinc-500 text-xs ml-3 hidden sm:inline">ScanFlow ERP</span>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${online ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
+          <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+            online ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
+          }`}>
             {online
-              ? <><Wifi className="h-3.5 w-3.5" />Live</>
-              : <><WifiOff className="h-3.5 w-3.5" />Offline</>}
+              ? <><Wifi className="h-3 w-3" />Live</>
+              : <><WifiOff className="h-3 w-3" />Offline</>}
           </div>
           <button
             onClick={() => { logout(); nav({ to: "/login" }); }}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-500 border border-[#e8ecf1] hover:border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors"
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
           >
-            <LogOut className="h-3.5 w-3.5" /> Sign out
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
           </button>
         </div>
       </header>
 
-      {/* Summary strip */}
-      <div className="px-5 py-3 flex items-center gap-4">
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-xl text-sm font-bold">
-          <Clock className="h-4 w-4" />
-          {pending.length} pending
+      {/* Stats strip */}
+      <div className="border-b border-zinc-200 bg-white px-6 py-2.5 flex items-center gap-6 shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold tabular-nums">
+            {pending.length > 99 ? "99+" : pending.length}
+          </span>
+          <span className="text-sm text-zinc-600">pending</span>
         </div>
-        <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-xl text-sm font-bold">
-          <CheckCircle2 className="h-4 w-4" />
-          {printed.length} printed today
+        <div className="w-px h-4 bg-zinc-200" />
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold tabular-nums">
+            {printed.length > 99 ? "99+" : printed.length}
+          </span>
+          <span className="text-sm text-zinc-600">printed today</span>
         </div>
       </div>
 
       {/* Two-column queue */}
-      <div className="flex-1 grid grid-cols-2 gap-4 px-5 pb-6 overflow-hidden">
+      <div className="flex-1 grid grid-cols-2 overflow-hidden">
 
         {/* Pending column */}
-        <div className="flex flex-col rounded-2xl border border-[#e8ecf1] bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#e8ecf1] bg-amber-50">
-            <Clock className="h-4 w-4 text-amber-600" />
-            <span className="font-extrabold text-amber-700 text-sm">Pending</span>
-            <span className="ml-auto bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2.5 py-0.5 text-xs font-bold">{pending.length}</span>
+        <div className="flex flex-col border-r border-zinc-200 overflow-hidden">
+          <div className="border-l-4 border-l-red-500 bg-white px-4 py-3 border-b border-zinc-200 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5 text-red-500" />
+              <span className="text-sm font-semibold text-zinc-800">Queue</span>
+            </div>
+            <span className="text-xs text-zinc-400 tabular-nums">{pending.length} bills</span>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+          <div className="flex-1 overflow-y-auto bg-white">
             {pending.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-32 text-slate-400 text-sm gap-2">
-                <CheckCircle2 className="h-7 w-7 text-slate-300" />
-                All caught up!
+              <div className="flex flex-col items-center justify-center h-40 text-zinc-400 gap-2">
+                <CheckCheck className="h-6 w-6 text-zinc-300" />
+                <span className="text-sm">All caught up</span>
               </div>
             )}
-            {pending.map((b) => (
-              <BillCard key={b.id} bill={b} onPrint={handlePrint} />
+            {pending.map((b, i) => (
+              <BillRow key={b.id} bill={b} onPrint={handlePrint} variant="pending" zebra={i % 2 === 1} />
             ))}
           </div>
         </div>
 
         {/* Printed column */}
-        <div className="flex flex-col rounded-2xl border border-[#e8ecf1] bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#e8ecf1] bg-green-50">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <span className="font-extrabold text-green-700 text-sm">Printed</span>
-            <span className="ml-auto bg-green-100 text-green-700 border border-green-200 rounded-full px-2.5 py-0.5 text-xs font-bold">{printed.length}</span>
+        <div className="flex flex-col overflow-hidden">
+          <div className="border-l-4 border-l-emerald-500 bg-white px-4 py-3 border-b border-zinc-200 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <CheckCheck className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-sm font-semibold text-zinc-800">Printed</span>
+            </div>
+            <span className="text-xs text-zinc-400 tabular-nums">{printed.length} bills</span>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+          <div className="flex-1 overflow-y-auto bg-white">
             {printed.length === 0 && (
-              <div className="text-center text-slate-400 text-sm mt-10">No printed bills yet</div>
+              <div className="flex flex-col items-center justify-center h-40 text-zinc-400 gap-2">
+                <Printer className="h-6 w-6 text-zinc-300" />
+                <span className="text-sm">No printed bills yet</span>
+              </div>
             )}
-            {printed.map((b) => (
-              <BillCard key={b.id} bill={b} onPrint={handlePrint} />
+            {printed.map((b, i) => (
+              <BillRow key={b.id} bill={b} onPrint={handlePrint} variant="printed" zebra={i % 2 === 1} />
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );
 }
 
-function BillCard({ bill, onPrint }: { bill: Bill; onPrint: (b: Bill) => void }) {
+function BillRow({
+  bill, onPrint, variant, zebra,
+}: {
+  bill: Bill;
+  onPrint: (b: Bill) => void;
+  variant: "pending" | "printed";
+  zebra: boolean;
+}) {
+  const isPending = variant === "pending";
   return (
-    <div className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
-      bill.printed
-        ? "bg-slate-50 border-[#e8ecf1]"
-        : "bg-white border-[#3b82f6]/30 shadow-sm"
-    }`}>
-      <div className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg ${
-        bill.printed ? "bg-slate-100" : "bg-[#3b82f6]/10"
+    <div className={`flex items-center gap-3 px-4 h-[52px] border-b border-zinc-100 group transition-colors ${
+      zebra ? "bg-zinc-50/60" : "bg-white"
+    } hover:bg-blue-50/40`}>
+      {/* Invoice number */}
+      <span className={`font-mono text-[13px] font-semibold tabular-nums w-28 shrink-0 ${
+        isPending ? "text-zinc-900" : "text-zinc-400"
       }`}>
-        <Printer className={`h-4 w-4 ${bill.printed ? "text-slate-400" : "text-[#3b82f6]"}`} />
-      </div>
+        {bill.invoice_no}
+      </span>
+
+      {/* Customer + mode */}
       <div className="flex-1 min-w-0">
-        <div className={`font-extrabold text-sm truncate ${bill.printed ? "text-slate-400" : "text-slate-900"}`}>
-          {bill.invoice_no}
+        <div className={`text-xs truncate ${isPending ? "text-zinc-700" : "text-zinc-400"}`}>
+          {bill.customers?.name ?? "Walk-in"}
         </div>
-        <div className="text-xs text-slate-400 truncate mt-0.5">
-          {bill.customers?.name ?? "Walk-in"} · {bill.payment_mode?.toUpperCase()}
+        <div className="text-[10px] text-zinc-400 uppercase tracking-wide">
+          {bill.payment_mode}
         </div>
-        <div className="text-[11px] text-slate-300 mt-0.5">{fmtDateTime(bill.invoice_date)}</div>
       </div>
-      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-        <div className={`font-extrabold text-sm tabular-nums ${bill.printed ? "text-slate-400" : "text-slate-900"}`}>
-          {inr(bill.grand_total)}
-        </div>
-        <button
-          onClick={() => onPrint(bill)}
-          className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors ${
-            bill.printed
-              ? "bg-white text-slate-500 border-[#e8ecf1] hover:bg-slate-100"
-              : "bg-[#3b82f6] text-white border-[#3b82f6] hover:bg-blue-600"
-          }`}
-        >
-          <Printer className="h-3 w-3" />
-          {bill.printed ? "Reprint" : "Print"}
-        </button>
-      </div>
+
+      {/* Amount */}
+      <span className={`font-semibold tabular-nums text-sm shrink-0 ${
+        isPending ? "text-zinc-900" : "text-zinc-400"
+      }`}>
+        {inr(bill.grand_total)}
+      </span>
+
+      {/* Print button */}
+      <button
+        onClick={() => onPrint(bill)}
+        title={isPending ? "Print" : "Reprint"}
+        className={`shrink-0 flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded transition-all ${
+          isPending
+            ? "bg-zinc-900 text-white hover:bg-zinc-700 opacity-100"
+            : "bg-transparent text-zinc-400 border border-zinc-200 hover:border-zinc-400 hover:text-zinc-600 opacity-0 group-hover:opacity-100"
+        }`}
+      >
+        <Printer className="h-3 w-3" />
+        {isPending ? "Print" : "Reprint"}
+      </button>
     </div>
   );
 }

@@ -895,22 +895,22 @@ export function SaleBillForm({
             <Dialog open={doorChooserOpen} onOpenChange={setDoorChooserOpen}>
               <DialogContent className="max-w-xs rounded-2xl p-6">
                 <DialogTitle className="text-base font-extrabold text-slate-900 mb-4">Add Door</DialogTitle>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => { setDoorChooserOpen(false); goAddDoor(); }}
-                    className="flex flex-col items-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white p-4 shadow-sm hover:border-[#7c3aed] hover:shadow-md active:scale-[0.97] transition-all"
+                    className="flex flex-col items-center gap-3 rounded-2xl border border-[#e8ecf1] bg-white p-8 shadow-sm hover:border-[#7c3aed] hover:shadow-md active:scale-[0.97] transition-all"
                   >
-                    <DoorOpen className="h-8 w-8 text-[#7c3aed]" />
-                    <span className="text-sm font-bold text-slate-700">Custom Door</span>
+                    <DoorOpen className="h-12 w-12 text-[#7c3aed]" />
+                    <span className="text-base font-bold text-slate-700">Custom Door</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setDoorChooserOpen(false); goAddDoor("wpc"); }}
-                    className="flex flex-col items-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white p-4 shadow-sm hover:border-[#7c3aed] hover:shadow-md active:scale-[0.97] transition-all"
+                    className="flex flex-col items-center gap-3 rounded-2xl border border-[#e8ecf1] bg-white p-8 shadow-sm hover:border-[#7c3aed] hover:shadow-md active:scale-[0.97] transition-all"
                   >
-                    <DoorOpen className="h-8 w-8 text-[#7c3aed]" />
-                    <span className="text-sm font-bold text-slate-700">WPC Door</span>
+                    <DoorOpen className="h-12 w-12 text-[#7c3aed]" />
+                    <span className="text-base font-bold text-slate-700">WPC Door</span>
                   </button>
                 </div>
               </DialogContent>
