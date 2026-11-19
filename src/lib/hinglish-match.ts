@@ -40,7 +40,7 @@ const HINDI_NUMS: Record<string, string> = {
   // 17
   satra: "17", satrah: "17", satraah: "17", seventeen: "17",
   // 18
-  atharah: "18", athaarah: "18", athra: "18", aathara: "18", eighteen: "18",
+  atharah: "18", athaarah: "18", athra: "18", aathra: "18", atra: "18", aatra: "18", aathara: "18", athara: "18", eighteen: "18",
   // 19
   unees: "19", unnees: "19", unnis: "19", nineteen: "19",
   // 20
