@@ -68,7 +68,10 @@ export function PlyWizardDialog({
   const addToCart = () => {
     if (rateN <= 0) return;
     onAdd({ name: `PLY — ${thickness} — ${brand} — ${size}`, area, rate: rateEff, qty: qtyN });
-    close();
+    // Stay in dialog, go back to brand chooser (keep thickness)
+    setBrand(""); setBrandId(null);
+    setSize(""); setRate(""); setQty("1"); setDiscMode("pct"); setDisc("");
+    setStep(1);
   };
 
   const titles = ["Choose thickness", "Choose brand", "Choose size", "Set rate", "Quantity", "Discount"];
