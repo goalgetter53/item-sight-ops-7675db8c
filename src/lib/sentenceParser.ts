@@ -85,23 +85,41 @@ function extractQty(tokens: string[]): { qty: number; rest: string[] } {
   return { qty: 1, rest: tokens };
 }
 
+// ── Hindi number normalisation ────────────────────────────────────────────────
+// Replace Hindi/English number words in a string with their digit equivalents.
+// "aath chaar" → "8 4", "velocity 18mm aath chaar" → "velocity 18mm 8 4"
+export function replaceHindiNums(text: string): string {
+  return text
+    .split(/\s+/)
+    .map((w) => {
+      const n = HINDI_NUM[w.toLowerCase()];
+      return n !== undefined ? String(n) : w;
+    })
+    .join(" ")
+    .trim();
+}
+
 // ── Segment splitting ─────────────────────────────────────────────────────────
 // Split by: comma | " aur " | " or " | " and "
-// Then within each segment, further split when a number word appears mid-segment
+// Then within each segment, further split when a number word starts a NEW item
+// (i.e. number appears mid-segment AND the previous token was NOT also a number —
+//  consecutive numbers like "aath chaar" are dimensions, not a new item boundary).
+function isNumToken(w: string): boolean {
+  return HINDI_NUM[w.toLowerCase()] !== undefined || /^\d+(\.\d+)?$/.test(w);
+}
+
 function splitSegments(text: string): string[] {
-  // Primary split
   const primary = text.split(/,|(?:\s+aur\s+)|(?:\s+or\s+)|(?:\s+and\s+)/i);
 
-  // Secondary: within each primary segment, detect if a number word starts mid-segment
   const result: string[] = [];
   for (const seg of primary) {
     const tokens = seg.trim().split(/\s+/).filter(Boolean);
     if (tokens.length === 0) continue;
-    // Walk tokens; when we hit a number word at position > 0, start a new segment
     let start = 0;
     for (let i = 1; i < tokens.length; i++) {
-      const w = tokens[i].toLowerCase();
-      if (HINDI_NUM[w] !== undefined || /^\d+$/.test(w)) {
+      // Only split if this token is a number AND the previous token was NOT a number
+      // (prevents splitting dimension pairs like "aath chaar" = 8×4)
+      if (isNumToken(tokens[i]) && !isNumToken(tokens[i - 1])) {
         result.push(tokens.slice(start, i).join(" "));
         start = i;
       }
@@ -123,6 +141,6 @@ export function parseSentence(raw: string): ParsedItem[] {
   return segments.map((seg) => {
     const tokens = seg.trim().split(/\s+/).filter(Boolean);
     const { qty, rest } = extractQty(tokens);
-    return { raw: seg, qty, itemText: rest.join(" ") };
+    return { raw: seg, qty, itemText: replaceHindiNums(rest.join(" ")) };
   });
 }
