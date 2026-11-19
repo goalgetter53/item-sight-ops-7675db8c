@@ -31,7 +31,9 @@ export function HardwareWizardDialog({
   initialPath?: InvNode[];
 }) {
   const [path, setPath] = useState<InvNode[]>([]);
-  const [phase, setPhase] = useState<"browse" | "amount" | "qty" | "disc">("browse");
+  const [phase, setPhase] = useState<"browse" | "dims" | "amount" | "qty" | "disc">("browse");
+  const [length, setLength] = useState("");
+  const [breadth, setBreadth] = useState("");
   const [amount, setAmount] = useState("");
   const [qty, setQty] = useState("1");
   const [discMode, setDiscMode] = useState<DiscountMode>("pct");
@@ -43,11 +45,11 @@ export function HardwareWizardDialog({
 
   const reset = () => {
     if (initialPath?.length) {
-      setPath(initialPath); setPhase("amount");
+      setPath(initialPath); setPhase("dims");
     } else {
       setPath([]); setPhase("browse");
     }
-    setAmount(""); setQty("1"); setDiscMode("pct"); setDisc("");
+    setLength(""); setBreadth(""); setAmount(""); setQty("1"); setDiscMode("pct"); setDisc("");
   };
   const close = () => { onOpenChange(false); reset(); };
 
@@ -57,22 +59,30 @@ export function HardwareWizardDialog({
   const amountEff = effectiveAmount(amountN, discMode, discN);
   const net = qtyN * amountEff;
 
-  // A node with no children is a leaf → price it.
   const pick = (n: InvNode) => setPath((p) => [...p, n]);
   const back = () => {
-    if (phase === "amount") { setPath((p) => p.slice(0, -1)); setPhase("browse"); return; }
+    if (phase === "dims") { setPath((p) => p.slice(0, -1)); setPhase("browse"); return; }
+    if (phase === "amount") { setPhase("dims"); return; }
     if (phase === "qty") { setPhase("amount"); return; }
     if (phase === "disc") { setPhase("qty"); return; }
-    setPath((p) => p.slice(0, -1)); // browse: up one level
+    setPath((p) => p.slice(0, -1));
   };
 
-  // Drilled into a node with no children → it's a leaf, go price it.
   useEffect(() => {
-    if (phase === "browse" && path.length > 0 && !isLoading && children.length === 0) setPhase("amount");
+    if (phase === "browse" && path.length > 0 && !isLoading && children.length === 0) setPhase("dims");
   }, [phase, path.length, isLoading, children.length]);
 
+  const dimsSuffix = (() => {
+    const l = length.trim(), b = breadth.trim();
+    if (l && b) return ` ${l}×${b}`;
+    if (l) return ` ${l}`;
+    return "";
+  })();
   const leafName = path.length ? path.map((p) => p.name).join(" / ") : "";
+  const displayName = `${leafName}${dimsSuffix}`;
+
   const title =
+    phase === "dims" ? "Length & Breadth" :
     phase === "amount" ? "Enter amount" :
     phase === "qty" ? "Quantity" :
     phase === "disc" ? "Discount" :
@@ -82,7 +92,7 @@ export function HardwareWizardDialog({
 
   const addToCart = () => {
     if (amountN <= 0) return;
-    onAdd({ name: `${leafName} (HARDWARE)`, amount: amountEff, qty: qtyN });
+    onAdd({ name: `${displayName} (HARDWARE)`, amount: amountEff, qty: qtyN });
     close();
   };
 
@@ -134,10 +144,44 @@ export function HardwareWizardDialog({
             </div>
           )}
 
+          {phase === "dims" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-sm font-bold text-slate-800">{leafName}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">Length</span>
+                  <input type="text" inputMode="decimal" autoFocus value={length}
+                    onChange={(e) => setLength(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") setPhase("amount"); }}
+                    placeholder='e.g. 4"'
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-lg font-bold text-slate-900 focus:border-[color:var(--accent)] focus:outline-none" />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">Breadth</span>
+                  <input type="text" inputMode="decimal" value={breadth}
+                    onChange={(e) => setBreadth(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") setPhase("amount"); }}
+                    placeholder='e.g. 3"'
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-lg font-bold text-slate-900 focus:border-[color:var(--accent)] focus:outline-none" />
+                </label>
+              </div>
+              <Button type="button" className="h-14 w-full rounded-2xl text-base font-bold text-white"
+                style={{ backgroundColor: ACCENT }} onClick={() => setPhase("amount")}>
+                Next
+              </Button>
+              <button type="button" onClick={() => setPhase("amount")}
+                className="w-full text-center text-sm text-slate-400 hover:text-slate-600">
+                Skip (no dimensions)
+              </button>
+            </div>
+          )}
+
           {phase === "amount" && (
             <div className="space-y-5">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-sm font-bold text-slate-800">{leafName}</p>
+                <p className="text-sm font-bold text-slate-800">{displayName}</p>
               </div>
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-700">Amount (per piece)</span>

@@ -11,12 +11,12 @@ const ACCENT: Record<ComboCategory, string> = { PLY: "#b26a2b", MICA: "#0f766e",
 
 export type PurchaseItem = { name: string; category: ComboCategory; qty: number; rate: number };
 
-// Build the item name in the SAME format Sales 2 uses, so stock keys match.
-function buildName(category: ComboCategory, path: InvNode[], micaNo: string): string {
+function buildName(category: ComboCategory, path: InvNode[], micaNo: string, dims?: string): string {
   const labels = path.map((p) => p.name);
   if (category === "PLY") return `PLY — ${labels.join(" — ")}`;
   if (category === "MICA") return `${micaNo.trim()} (${labels[labels.length - 1] ?? ""})`;
-  return `${labels.join(" / ")} (HARDWARE)`;
+  const base = labels.join(" / ");
+  return dims ? `${base} ${dims} (HARDWARE)` : `${base} (HARDWARE)`;
 }
 
 /**
@@ -37,8 +37,10 @@ export function PurchaseItemDialog({
   initialPath?: InvNode[];
 }) {
   const [path, setPath] = useState<InvNode[]>([]);
-  const [phase, setPhase] = useState<"browse" | "mica" | "entry">("browse");
+  const [phase, setPhase] = useState<"browse" | "mica" | "dims" | "entry">("browse");
   const [micaNo, setMicaNo] = useState("");
+  const [length, setLength] = useState("");
+  const [breadth, setBreadth] = useState("");
   const [qty, setQty] = useState("1");
   const [rate, setRate] = useState("");
 
@@ -50,30 +52,39 @@ export function PurchaseItemDialog({
 
   const reset = () => {
     if (initialPath?.length && (category ?? "HARDWARE") === "HARDWARE") {
-      setPath(initialPath); setPhase("entry");
+      setPath(initialPath); setPhase("dims");
     } else {
       setPath([]); setPhase("browse");
     }
-    setMicaNo(""); setQty("1"); setRate("");
+    setMicaNo(""); setLength(""); setBreadth(""); setQty("1"); setRate("");
   };
   const close = () => { onOpenChange(false); reset(); };
   useEffect(() => { if (open) reset(); }, [open, category, initialPath]);
 
-  // Reached a leaf (drilled node with no children) → MICA asks a number, others price.
   useEffect(() => {
     if (phase === "browse" && path.length > 0 && !isLoading && children.length === 0) {
-      setPhase(cat === "MICA" ? "mica" : "entry");
+      setPhase(cat === "MICA" ? "mica" : "dims");
     }
   }, [phase, path.length, isLoading, children.length, cat]);
 
   const qtyN = Math.max(1, Number(qty) || 1);
   const rateN = Number(rate) || 0;
   const lineTotal = qtyN * rateN;
-  const name = useMemo(() => buildName(cat, path, micaNo), [cat, path, micaNo]);
+  const dimsSuffix = (() => {
+    const l = length.trim(), b = breadth.trim();
+    if (l && b) return `${l}×${b}`;
+    if (l) return l;
+    return "";
+  })();
+  const name = useMemo(
+    () => buildName(cat, path, micaNo, dimsSuffix || undefined),
+    [cat, path, micaNo, dimsSuffix]
+  );
 
   const back = () => {
     if (phase === "entry" && cat === "MICA") { setPhase("mica"); return; }
-    if (phase === "entry") { setPath((p) => p.slice(0, -1)); setPhase("browse"); return; }
+    if (phase === "entry") { setPhase("dims"); return; }
+    if (phase === "dims") { setPath((p) => p.slice(0, -1)); setPhase("browse"); return; }
     if (phase === "mica") { setPath((p) => p.slice(0, -1)); setPhase("browse"); return; }
     setPath((p) => p.slice(0, -1));
   };
@@ -95,6 +106,7 @@ export function PurchaseItemDialog({
   };
 
   const title =
+    phase === "dims" ? "Length & Breadth" :
     phase === "entry" ? "Quantity & rate" :
     phase === "mica" ? "Mica number" :
     path.length ? path[path.length - 1].name : `Choose ${cat.toLowerCase()}`;
@@ -144,6 +156,40 @@ export function PurchaseItemDialog({
                   <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
                 </button>
               ))}
+            </div>
+          )}
+
+          {phase === "dims" && cat === "HARDWARE" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-sm font-bold text-slate-800">{path.map((p) => p.name).join(" / ")}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">Length</span>
+                  <input type="text" inputMode="decimal" autoFocus value={length}
+                    onChange={(e) => setLength(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") setPhase("entry"); }}
+                    placeholder='e.g. 4"'
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-lg font-bold text-slate-900 focus:border-[color:var(--accent)] focus:outline-none" />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">Breadth</span>
+                  <input type="text" inputMode="decimal" value={breadth}
+                    onChange={(e) => setBreadth(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") setPhase("entry"); }}
+                    placeholder='e.g. 3"'
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-lg font-bold text-slate-900 focus:border-[color:var(--accent)] focus:outline-none" />
+                </label>
+              </div>
+              <Button type="button" className="h-14 w-full rounded-2xl text-base font-bold text-white"
+                style={{ backgroundColor: accent }} onClick={() => setPhase("entry")}>
+                Next
+              </Button>
+              <button type="button" onClick={() => setPhase("entry")}
+                className="w-full text-center text-sm text-slate-400 hover:text-slate-600">
+                Skip (no dimensions)
+              </button>
             </div>
           )}
 
