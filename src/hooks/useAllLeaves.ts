@@ -1,0 +1,71 @@
+/**
+ * Returns all leaf nodes across PLY, MICA, HARDWARE from inventory_nodes,
+ * plus door_types as "DOOR" leaves.
+ */
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { InvNode } from "@/lib/inventoryNodes";
+
+export type CategoryKey = "PLY" | "MICA" | "HARDWARE" | "DOOR";
+
+export type AnyLeaf = {
+  path: InvNode[];
+  fullName: string;
+  category: CategoryKey;
+};
+
+type RawNode = { id: string; name: string; parent_id: string | null };
+const INV_CATS: CategoryKey[] = ["PLY", "MICA", "HARDWARE"];
+
+export function useAllLeaves() {
+  return useQuery<AnyLeaf[]>({
+    queryKey: ["all-leaves"],
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const [nodesRes, doorsRes] = await Promise.all([
+        supabase.from("inventory_nodes").select("id, name, parent_id").order("sort"),
+        supabase.from("door_types").select("id, name").eq("active", true),
+      ]);
+      if (nodesRes.error) throw nodesRes.error;
+
+      const nodes = nodesRes.data as unknown as RawNode[];
+      const childMap = new Map<string, RawNode[]>();
+      for (const n of nodes) {
+        const key = n.parent_id ?? "__root__";
+        const arr = childMap.get(key) ?? [];
+        arr.push(n);
+        childMap.set(key, arr);
+      }
+
+      const leaves: AnyLeaf[] = [];
+
+      // Inventory tree leaves for PLY, MICA, HARDWARE
+      for (const cat of INV_CATS) {
+        const root = nodes.find((n) => n.parent_id === null && n.name === cat);
+        if (!root) continue;
+        function dfs(id: string, path: InvNode[]) {
+          const kids = childMap.get(id) ?? [];
+          if (kids.length === 0) {
+            leaves.push({ path, fullName: path.map((p) => p.name).join(" "), category: cat });
+          } else {
+            for (const k of kids) dfs(k.id, [...path, { id: k.id, name: k.name }]);
+          }
+        }
+        dfs(root.id, []);
+      }
+
+      // Door types as flat leaves
+      if (!doorsRes.error && doorsRes.data) {
+        for (const dt of doorsRes.data as { id: string; name: string }[]) {
+          leaves.push({
+            path: [{ id: dt.id, name: dt.name }],
+            fullName: dt.name,
+            category: "DOOR",
+          });
+        }
+      }
+
+      return leaves;
+    },
+  });
+}

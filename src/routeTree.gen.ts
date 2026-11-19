@@ -25,6 +25,7 @@ import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppSales2RouteImport } from './routes/_app.sales2'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppTaxReportsRouteImport } from './routes/_app.tax-reports'
+import { Route as AppTrialRouteImport } from './routes/_app.trial'
 import { Route as PrintBillIdRouteImport } from './routes/print-bill.$id'
 import { Route as AppGodownsIndexRouteImport } from './routes/_app.godowns.index'
 import { Route as AppInventoryIndexRouteImport } from './routes/_app.inventory.index'
@@ -133,6 +134,11 @@ const AppTaxReportsRoute = AppTaxReportsRouteImport.update({
 } as any).lazy(() =>
   import('./routes/_app.tax-reports.lazy').then((d) => d.Route),
 )
+const AppTrialRoute = AppTrialRouteImport.update({
+  id: '/trial',
+  path: '/trial',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() => import('./routes/_app.trial.lazy').then((d) => d.Route))
 const PrintBillIdRoute = PrintBillIdRouteImport.update({
   id: '/print-bill/$id',
   path: '/print-bill/$id',
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/sales2': typeof AppSales2Route
   '/settings': typeof AppSettingsRoute
   '/tax-reports': typeof AppTaxReportsRoute
+  '/trial': typeof AppTrialRoute
   '/print-bill/$id': typeof PrintBillIdRoute
   '/inventory/$productId': typeof AppInventoryProductIdRoute
   '/inventory/scan': typeof AppInventoryScanRoute
@@ -308,6 +315,7 @@ export interface FileRoutesByTo {
   '/sales2': typeof AppSales2Route
   '/settings': typeof AppSettingsRoute
   '/tax-reports': typeof AppTaxReportsRoute
+  '/trial': typeof AppTrialRoute
   '/print-bill/$id': typeof PrintBillIdRoute
   '/inventory/$productId': typeof AppInventoryProductIdRoute
   '/inventory/scan': typeof AppInventoryScanRoute
@@ -347,6 +355,7 @@ export interface FileRoutesById {
   '/_app/sales2': typeof AppSales2Route
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tax-reports': typeof AppTaxReportsRoute
+  '/_app/trial': typeof AppTrialRoute
   '/print-bill/$id': typeof PrintBillIdRoute
   '/_app/inventory/$productId': typeof AppInventoryProductIdRoute
   '/_app/inventory/scan': typeof AppInventoryScanRoute
@@ -386,6 +395,7 @@ export interface FileRouteTypes {
     | '/sales2'
     | '/settings'
     | '/tax-reports'
+    | '/trial'
     | '/print-bill/$id'
     | '/inventory/$productId'
     | '/inventory/scan'
@@ -423,6 +433,7 @@ export interface FileRouteTypes {
     | '/sales2'
     | '/settings'
     | '/tax-reports'
+    | '/trial'
     | '/print-bill/$id'
     | '/inventory/$productId'
     | '/inventory/scan'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/_app/sales2'
     | '/_app/settings'
     | '/_app/tax-reports'
+    | '/_app/trial'
     | '/print-bill/$id'
     | '/_app/inventory/$productId'
     | '/_app/inventory/scan'
@@ -604,6 +616,13 @@ declare module '@tanstack/react-router' {
       path: '/tax-reports'
       fullPath: '/tax-reports'
       preLoaderRoute: typeof AppTaxReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/trial': {
+      id: '/_app/trial'
+      path: '/trial'
+      fullPath: '/trial'
+      preLoaderRoute: typeof AppTrialRouteImport
       parentRoute: typeof AppRoute
     }
     '/print-bill/$id': {
@@ -762,6 +781,7 @@ interface AppRouteChildren {
   AppSales2Route: typeof AppSales2Route
   AppSettingsRoute: typeof AppSettingsRoute
   AppTaxReportsRoute: typeof AppTaxReportsRoute
+  AppTrialRoute: typeof AppTrialRoute
   AppInventoryProductIdRoute: typeof AppInventoryProductIdRoute
   AppInventoryScanRoute: typeof AppInventoryScanRoute
   AppInventoryStockEntryRoute: typeof AppInventoryStockEntryRoute
@@ -795,6 +815,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSales2Route: AppSales2Route,
   AppSettingsRoute: AppSettingsRoute,
   AppTaxReportsRoute: AppTaxReportsRoute,
+  AppTrialRoute: AppTrialRoute,
   AppInventoryProductIdRoute: AppInventoryProductIdRoute,
   AppInventoryScanRoute: AppInventoryScanRoute,
   AppInventoryStockEntryRoute: AppInventoryStockEntryRoute,
