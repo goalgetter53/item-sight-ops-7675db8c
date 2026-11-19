@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { NumPad } from "@/components/ui/NumPad";
 import { inr } from "@/lib/codes";
 
 export type DiscountMode = "pct" | "pp";
@@ -27,42 +28,24 @@ export function QuantityStep({
         <span className="text-base font-bold tabular-nums text-slate-800">{inr(perUnit)}</span>
       </div>
 
-      <label className="block">
-        <span className="mb-2 block text-sm font-semibold text-slate-700">Quantity (pieces)</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={1}
-          autoFocus
-          value={qty}
-          onChange={(e) => setQty(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") onNext(); }}
-          placeholder="1"
-          className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-2xl font-bold text-slate-900 tabular-nums focus:outline-none"
-          style={{ ["--tw-ring-color" as string]: accent }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "")}
-        />
-      </label>
+      <NumPad
+        value={qty}
+        onChange={setQty}
+        onDone={onNext}
+        label="pieces"
+        decimal={false}
+        accent={accent}
+      />
 
       <div className="flex items-baseline justify-between rounded-2xl px-4 py-3" style={{ backgroundColor: `${accent}14` }}>
         <span className="text-sm font-semibold text-slate-600">Line total</span>
         <span className="text-2xl font-extrabold tabular-nums" style={{ color: accent }}>{inr(qtyN * perUnit)}</span>
       </div>
-
-      <Button
-        type="button"
-        className="h-14 w-full rounded-2xl text-base font-bold text-white"
-        style={{ backgroundColor: accent }}
-        onClick={onNext}
-      >
-        Next
-      </Button>
     </div>
   );
 }
 
-/** Discount step shared by the PLY/MICA wizards. Pick ONE mode: total % or ₹ per piece. Optional. */
+/** Discount step shared by the PLY/MICA wizards. */
 export function DiscountStep({
   accent,
   gross,
@@ -100,24 +83,15 @@ export function DiscountStep({
         {tab("pp", "Per piece ₹")}
       </div>
 
-      <label className="block">
-        <span className="mb-2 block text-sm font-semibold text-slate-700">
-          {mode === "pct" ? "Discount %" : "Discount ₹ per piece"} <span className="font-normal text-slate-400">(optional)</span>
-        </span>
-        <div className="flex items-center rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 focus-within:border-[color:var(--accent)]" style={{ ["--accent" as string]: accent }}>
-          <span className="mr-2 text-xl font-bold text-slate-400">{mode === "pct" ? "%" : "₹"}</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            autoFocus
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="0"
-            className="w-full bg-transparent text-2xl font-bold text-slate-900 tabular-nums focus:outline-none"
-          />
-        </div>
-      </label>
+      <NumPad
+        value={value}
+        onChange={setValue}
+        onDone={() => {/* parent decides when to advance */}}
+        label={mode === "pct" ? "%" : "₹/pc"}
+        prefix={mode === "pct" ? "%" : "₹"}
+        decimal
+        accent={accent}
+      />
 
       <div className="space-y-1.5 rounded-2xl px-4 py-3" style={{ backgroundColor: `${accent}14` }}>
         <Row label={`Gross (${qty} pcs)`} value={inr(gross)} />

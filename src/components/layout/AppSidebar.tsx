@@ -1,4 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { flush, queueSize } from "@/lib/offlineQueue";
+import { toast } from "sonner";
 import {
   LayoutDashboard, Boxes, ShoppingCart, Receipt,
   BarChart3, Bell, Settings, ScanLine,
@@ -52,6 +56,24 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
 
   // Pick the single best-matching nav item (longest `to` that matches the
   // current pathname) so nested routes don't highlight two tiles at once.
+  const online = useOnlineStatus();
+
+  // Flush queued offline writes when we come back online
+  useEffect(() => {
+    if (!online) {
+      toast.warning("No internet — changes will sync when connected", { id: "offline-banner", duration: Infinity });
+      return;
+    }
+    toast.dismiss("offline-banner");
+    const n = queueSize();
+    if (n > 0) {
+      flush().then(({ ok, failed }) => {
+        if (ok > 0) toast.success(`Synced ${ok} pending action${ok > 1 ? "s" : ""}`);
+        if (failed > 0) toast.error(`${failed} action${failed > 1 ? "s" : ""} failed to sync — retry later`);
+      });
+    }
+  }, [online]);
+
   const activeTo = visible
     .map((it) => it.to)
     .filter((to) => pathname === to || pathname.startsWith(to + "/"))
@@ -64,10 +86,12 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
           <div className="h-8 w-8 rounded-lg bg-primary grid place-content-center text-primary-foreground text-sm font-semibold">
             S
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <div className="text-[15px] font-semibold tracking-tight leading-tight text-foreground">ScanFlow</div>
             <div className="text-[11px] text-muted-foreground leading-tight">ERP</div>
           </div>
+          <span title={online ? "Online" : "Offline"}
+            className={`h-2.5 w-2.5 rounded-full shrink-0 ${online ? "bg-emerald-500" : "bg-red-400 animate-pulse"}`} />
         </div>
       </div>
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">

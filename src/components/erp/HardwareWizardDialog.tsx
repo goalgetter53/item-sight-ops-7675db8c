@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { NumPad } from "@/components/ui/NumPad";
 import { ArrowLeft, Check, ChevronRight, Mic, MicOff } from "lucide-react";
 import { DiscountStep, QuantityStep, type DiscountMode } from "@/components/erp/WizardSteps";
 import { useRootNodeId, useChildren, type InvNode } from "@/lib/inventoryNodes";
@@ -306,25 +307,19 @@ export function HardwareWizardDialog({
 
           {/* ── Amount phase ── */}
           {phase === "amount" && (
-            <div className="space-y-5">
+            <div className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-sm font-bold text-slate-800">{displayName}</p>
               </div>
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-slate-700">Amount (per piece)</span>
-                <div className="flex items-center rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 focus-within:border-[color:var(--accent)]">
-                  <span className="mr-2 text-xl font-bold text-slate-400">₹</span>
-                  <input type="number" inputMode="numeric" min={0} autoFocus value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter" && amountN > 0) setPhase("qty"); }}
-                    placeholder="0"
-                    className="w-full bg-transparent text-2xl font-bold text-slate-900 tabular-nums focus:outline-none" />
-                </div>
-              </label>
-              <Button type="button" className="h-14 w-full rounded-2xl text-base font-bold text-white disabled:opacity-40"
-                style={{ backgroundColor: ACCENT }} disabled={!(amountN > 0)} onClick={() => setPhase("qty")}>
-                Next
-              </Button>
+              <NumPad
+                value={amount}
+                onChange={setAmount}
+                onDone={() => { if (amountN > 0) setPhase("qty"); }}
+                prefix="₹"
+                label="per piece"
+                decimal
+                accent={ACCENT}
+              />
             </div>
           )}
 

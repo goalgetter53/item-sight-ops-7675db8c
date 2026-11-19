@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { NumPad } from "@/components/ui/NumPad";
 import { ArrowLeft, Check, ChevronRight } from "lucide-react";
 import { useRootNodeId, useChildren, type InvNode } from "@/lib/inventoryNodes";
 import type { ComboCategory } from "@/lib/comboStock";
@@ -211,22 +211,16 @@ export function PurchaseItemDialog({
           )}
 
           {phase === "entry" && (
-            <div className="space-y-5">
+            <div className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-sm font-bold text-slate-800">{name}</p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">Quantity</span>
-                  <Input type="number" inputMode="numeric" min={1} autoFocus value={qty}
-                    onChange={(e) => setQty(e.target.value)} placeholder="1" className="h-12 text-lg font-bold" />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">Rate (per piece)</span>
-                  <Input type="number" inputMode="numeric" min={0} value={rate}
-                    onChange={(e) => setRate(e.target.value)} placeholder="0" className="h-12 text-lg font-bold" />
-                </label>
-              </div>
+              {/* Two-tab: Qty then Rate */}
+              <EntryTabs
+                qty={qty} setQty={setQty}
+                rate={rate} setRate={setRate}
+                accent={accent}
+              />
               <div className="flex items-baseline justify-between rounded-2xl px-4 py-3" style={{ backgroundColor: `${accent}14` }}>
                 <span className="text-sm font-semibold text-slate-600">Line total</span>
                 <span className="text-2xl font-extrabold tabular-nums" style={{ color: accent }}>{inr(lineTotal)}</span>
@@ -245,5 +239,27 @@ export function PurchaseItemDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function EntryTabs({
+  qty, setQty, rate, setRate, accent,
+}: { qty: string; setQty: (v: string) => void; rate: string; setRate: (v: string) => void; accent: string }) {
+  const [tab, setTab] = useState<"qty" | "rate">("qty");
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-1 rounded-2xl border border-slate-200 bg-white p-1">
+        {(["qty", "rate"] as const).map((t) => (
+          <button key={t} type="button" onClick={() => setTab(t)}
+            className="flex-1 rounded-xl px-3 py-2 text-sm font-bold transition-colors"
+            style={tab === t ? { backgroundColor: accent, color: "#fff" } : { color: "#64748b" }}>
+            {t === "qty" ? "Qty (pcs)" : "Rate ₹"}
+          </button>
+        ))}
+      </div>
+      {tab === "qty"
+        ? <NumPad value={qty} onChange={setQty} onDone={() => setTab("rate")} label="pieces" decimal={false} accent={accent} />
+        : <NumPad value={rate} onChange={setRate} onDone={() => {}} label="₹/pc" prefix="₹" decimal accent={accent} />}
+    </div>
   );
 }
