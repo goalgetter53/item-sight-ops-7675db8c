@@ -554,149 +554,266 @@ export function SaleBillForm({
 
   return (
     <div className="min-h-[calc(100dvh-1rem)] w-full bg-[#fafbfc] p-3 md:p-6 pb-32">
-      <div className="max-w-7xl mx-auto flex flex-col gap-4 md:gap-6">
+      <div className={`${entryMode === "tiles" ? "max-w-5xl" : "max-w-7xl"} mx-auto flex flex-col gap-4 md:gap-6`}>
 
         {/* Top Header */}
-        <header className="bg-white border border-[#e8ecf1] rounded-xl p-4 md:p-5 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between">
-            <div className="flex items-center gap-3 md:gap-4">
-              <Button variant="ghost" size="icon" aria-label="Back to sales" className="h-9 w-9 -ml-1" onClick={() => nav({ to: "/sales" })}>
+        {entryMode === "tiles" ? (
+          <header className="rounded-2xl border border-[#e8ecf1] bg-white shadow-sm overflow-hidden">
+            {/* Top bar: back + invoice + date + save */}
+            <div className="flex items-center gap-3 border-b border-[#e8ecf1] px-4 py-3">
+              <Button variant="ghost" size="icon" aria-label="Back to sales" className="h-9 w-9 -ml-1 shrink-0" onClick={() => nav({ to: "/sales" })}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="space-y-0.5">
-                <p className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">{isGst ? "Invoice No." : "Estimate No."}</p>
-                <h2 className="text-base md:text-lg font-bold text-slate-800 tabular-nums">{invoicePreview}</h2>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-800 tabular-nums truncate">
+                  {isGst ? "Invoice" : "Estimate"} {invoicePreview}
+                </p>
+                <p className="text-xs text-slate-400">{today}</p>
               </div>
-              <div className="h-10 w-px bg-[#e8ecf1] hidden md:block" />
-              <div className="space-y-0.5 hidden md:block">
-                <p className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">Billing Date</p>
-                <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-                  <Calendar className="h-3.5 w-3.5 text-[#94a3b8]" />
-                  {today}
-                </div>
-              </div>
+              <Button
+                type="button"
+                onClick={onSaveClick}
+                disabled={busy || lines.length === 0}
+                className="h-9 px-4 text-sm font-bold shrink-0"
+              >
+                {busy ? "Saving…" : "Save Sale"}
+              </Button>
             </div>
 
-            {f.customer.visible && (
-              <div className="w-full lg:flex-1 lg:w-auto min-w-0 lg:min-w-[240px] space-y-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">
-                  Customer {f.customer.required && <span className="text-red-500">*</span>}
-                </label>
-                <div className="flex gap-2">
-                  <VoiceSearchPicker
-                    options={customers.map((c) => ({ id: c.id, label: c.name, sub: c.phone ?? undefined }))}
-                    value={customerId}
-                    onChange={(id) => setCustomerId(id)}
-                    placeholder={f.customer.required ? "Search customer…" : "Walk-in / search…"}
-                    required={f.customer.required}
-                  />
-                  <Button type="button" variant="outline" size="sm" className="h-11 gap-1 shrink-0 whitespace-nowrap" onClick={() => setCreateCustomerOpen(true)}>
-                    <Plus className="h-4 w-4" /> <span>New</span>
-                  </Button>
+            {/* Fields: customer + payment + bill type */}
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {f.customer.visible && (
+                  <div className="sm:col-span-1 space-y-1">
+                    <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Customer {f.customer.required && <span className="text-red-500">*</span>}
+                    </label>
+                    <div className="flex gap-2">
+                      <VoiceSearchPicker
+                        options={customers.map((c) => ({ id: c.id, label: c.name, sub: c.phone ?? undefined }))}
+                        value={customerId}
+                        onChange={(id) => setCustomerId(id)}
+                        placeholder={f.customer.required ? "Search customer…" : "Walk-in / search…"}
+                        required={f.customer.required}
+                      />
+                      <Button type="button" variant="outline" size="sm" className="h-11 gap-1 shrink-0" onClick={() => setCreateCustomerOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {f.payment_mode.visible && (
+                  <div className="space-y-1">
+                    <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Payment</label>
+                    <div className="flex bg-[#fafbfc] p-1 border border-[#e8ecf1] rounded-xl">
+                      {["cash", "upi", "card", "credit"].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setPaymentMode(m)}
+                          className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all capitalize min-h-[32px] ${
+                            paymentMode === m ? "bg-white shadow-sm text-[#3b82f6]" : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Bill Type</label>
+                  <div className="flex bg-[#fafbfc] p-1 border border-[#e8ecf1] rounded-xl">
+                    {([["estimate", "Estimate"], ["gst", "GST"]] as const).map(([v, lbl]) => {
+                      const on = (v === "gst") === isGst;
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setIsGst(v === "gst")}
+                          className={`flex-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all min-h-[32px] ${
+                            on ? "bg-white shadow-sm text-[#3b82f6]" : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          {lbl}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Payment + Bill type: full-width stacked on mobile, inline on desktop */}
-            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-4 w-full lg:w-auto">
-              {f.payment_mode.visible && (
-                <div className="space-y-1 w-full sm:w-auto">
-                  <label className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">Payment</label>
-                  <div className="flex bg-[#fafbfc] p-1 border border-[#e8ecf1] rounded-lg">
-                    {["cash", "upi", "card", "credit"].map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setPaymentMode(m)}
-                        className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-bold rounded transition-all capitalize min-h-[32px] ${
-                          paymentMode === m
-                            ? "bg-white shadow-sm text-[#3b82f6]"
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        {m}
-                      </button>
-                    ))}
+              {/* Stock source (compact row) */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold flex items-center gap-1">
+                  <Warehouse className="h-3 w-3" /> Stock
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setSourceGodownId("")}
+                  className={`px-3 h-7 text-xs font-bold rounded-lg border transition-all ${
+                    sourceGodownId === "" ? "bg-[#3b82f6] text-white border-[#3b82f6]" : "bg-white text-slate-600 border-[#e8ecf1] hover:bg-slate-50"
+                  }`}
+                >
+                  Shop
+                </button>
+                <select
+                  value={sourceGodownId}
+                  onChange={(e) => setSourceGodownId(e.target.value)}
+                  className={`h-7 px-2 text-xs font-bold rounded-lg border ${
+                    sourceGodownId ? "bg-[#3b82f6] text-white border-[#3b82f6]" : "bg-white text-slate-600 border-[#e8ecf1]"
+                  }`}
+                >
+                  <option value="" className="bg-white text-slate-800">— Godown —</option>
+                  {godowns.map((g) => (
+                    <option key={g.id} value={g.id} className="bg-white text-slate-800">{g.name}</option>
+                  ))}
+                </select>
+              </div>
+              {customerState && (
+                <p className="text-[11px] text-slate-400">GST State: <span className="text-slate-600 font-medium">{customerState}</span></p>
+              )}
+            </div>
+          </header>
+        ) : (
+          <header className="bg-white border border-[#e8ecf1] rounded-xl p-4 md:p-5 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between">
+              <div className="flex items-center gap-3 md:gap-4">
+                <Button variant="ghost" size="icon" aria-label="Back to sales" className="h-9 w-9 -ml-1" onClick={() => nav({ to: "/sales" })}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="space-y-0.5">
+                  <p className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">{isGst ? "Invoice No." : "Estimate No."}</p>
+                  <h2 className="text-base md:text-lg font-bold text-slate-800 tabular-nums">{invoicePreview}</h2>
+                </div>
+                <div className="h-10 w-px bg-[#e8ecf1] hidden md:block" />
+                <div className="space-y-0.5 hidden md:block">
+                  <p className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">Billing Date</p>
+                  <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                    <Calendar className="h-3.5 w-3.5 text-[#94a3b8]" />
+                    {today}
+                  </div>
+                </div>
+              </div>
+
+              {f.customer.visible && (
+                <div className="w-full lg:flex-1 lg:w-auto min-w-0 lg:min-w-[240px] space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">
+                    Customer {f.customer.required && <span className="text-red-500">*</span>}
+                  </label>
+                  <div className="flex gap-2">
+                    <VoiceSearchPicker
+                      options={customers.map((c) => ({ id: c.id, label: c.name, sub: c.phone ?? undefined }))}
+                      value={customerId}
+                      onChange={(id) => setCustomerId(id)}
+                      placeholder={f.customer.required ? "Search customer…" : "Walk-in / search…"}
+                      required={f.customer.required}
+                    />
+                    <Button type="button" variant="outline" size="sm" className="h-11 gap-1 shrink-0 whitespace-nowrap" onClick={() => setCreateCustomerOpen(true)}>
+                      <Plus className="h-4 w-4" /> <span>New</span>
+                    </Button>
                   </div>
                 </div>
               )}
 
-              <div className="space-y-1 w-full sm:w-auto">
-                <label className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">Bill type</label>
-                <div className="flex bg-[#fafbfc] p-1 border border-[#e8ecf1] rounded-lg">
-                  {([["estimate", "Estimate"], ["gst", "GST"]] as const).map(([v, lbl]) => {
-                    const on = (v === "gst") === isGst;
-                    return (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setIsGst(v === "gst")}
-                        className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-bold rounded transition-all min-h-[32px] ${
-                          on ? "bg-white shadow-sm text-[#3b82f6]" : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        {lbl}
-                      </button>
-                    );
-                  })}
+              <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-4 w-full lg:w-auto">
+                {f.payment_mode.visible && (
+                  <div className="space-y-1 w-full sm:w-auto">
+                    <label className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">Payment</label>
+                    <div className="flex bg-[#fafbfc] p-1 border border-[#e8ecf1] rounded-lg">
+                      {["cash", "upi", "card", "credit"].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setPaymentMode(m)}
+                          className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-bold rounded transition-all capitalize min-h-[32px] ${
+                            paymentMode === m
+                              ? "bg-white shadow-sm text-[#3b82f6]"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-1 w-full sm:w-auto">
+                  <label className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">Bill type</label>
+                  <div className="flex bg-[#fafbfc] p-1 border border-[#e8ecf1] rounded-lg">
+                    {([["estimate", "Estimate"], ["gst", "GST"]] as const).map(([v, lbl]) => {
+                      const on = (v === "gst") === isGst;
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setIsGst(v === "gst")}
+                          className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-bold rounded transition-all min-h-[32px] ${
+                            on ? "bg-white shadow-sm text-[#3b82f6]" : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          {lbl}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="mt-3 flex items-center gap-2 flex-wrap">
-            <label className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold flex items-center gap-1">
-              <Warehouse className="h-3 w-3" /> Stock source
-            </label>
-            <button
-              type="button"
-              onClick={() => setSourceGodownId("")}
-              className={`px-3 h-7 text-xs font-bold rounded-md border transition-all ${
-                sourceGodownId === ""
-                  ? "bg-[#3b82f6] text-white border-[#3b82f6]"
-                  : "bg-white text-slate-600 border-[#e8ecf1] hover:bg-slate-50"
-              }`}
-            >
-              Shop
-            </button>
-            <select
-              value={sourceGodownId}
-              onChange={(e) => setSourceGodownId(e.target.value)}
-              className={`h-7 px-2 text-xs font-bold rounded-md border ${
-                sourceGodownId
-                  ? "bg-[#3b82f6] text-white border-[#3b82f6]"
-                  : "bg-white text-slate-600 border-[#e8ecf1]"
-              }`}
-            >
-              <option value="" className="bg-white text-slate-800">— Godown —</option>
-              {godowns.map((g) => (
-                <option key={g.id} value={g.id} className="bg-white text-slate-800">{g.name}</option>
-              ))}
-            </select>
-            <span className="text-[10px] text-[#94a3b8]">Scans must come from the selected location.</span>
-          </div>
-          {customerState && (
-            <div className="mt-3 text-[11px] text-[#94a3b8]">
-              GST State: <span className="text-slate-600 font-medium">{customerState}</span>
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <label className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold flex items-center gap-1">
+                <Warehouse className="h-3 w-3" /> Stock source
+              </label>
+              <button
+                type="button"
+                onClick={() => setSourceGodownId("")}
+                className={`px-3 h-7 text-xs font-bold rounded-md border transition-all ${
+                  sourceGodownId === ""
+                    ? "bg-[#3b82f6] text-white border-[#3b82f6]"
+                    : "bg-white text-slate-600 border-[#e8ecf1] hover:bg-slate-50"
+                }`}
+              >
+                Shop
+              </button>
+              <select
+                value={sourceGodownId}
+                onChange={(e) => setSourceGodownId(e.target.value)}
+                className={`h-7 px-2 text-xs font-bold rounded-md border ${
+                  sourceGodownId
+                    ? "bg-[#3b82f6] text-white border-[#3b82f6]"
+                    : "bg-white text-slate-600 border-[#e8ecf1]"
+                }`}
+              >
+                <option value="" className="bg-white text-slate-800">— Godown —</option>
+                {godowns.map((g) => (
+                  <option key={g.id} value={g.id} className="bg-white text-slate-800">{g.name}</option>
+                ))}
+              </select>
+              <span className="text-[10px] text-[#94a3b8]">Scans must come from the selected location.</span>
             </div>
-          )}
-        </header>
+            {customerState && (
+              <div className="mt-3 text-[11px] text-[#94a3b8]">
+                GST State: <span className="text-slate-600 font-medium">{customerState}</span>
+              </div>
+            )}
+          </header>
+        )}
 
         {entryMode === "tiles" ? (
-          // Category tiles: PLY/MICA/HARDWARE open their wizards (live from Inventory 2); DOORS reuses Add Door flow.
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(["PLY", "MICA", "HARDWARE", "DOORS"] as const).map((label) => (
               <button
                 key={label}
                 type="button"
                 onClick={label === "DOORS" ? goAddDoor : label === "PLY" ? () => setPlyOpen(true) : label === "MICA" ? () => setMicaOpen(true) : () => setHardwareOpen(true)}
-                className="group flex flex-col items-center justify-center gap-3 bg-white border border-[#e8ecf1] rounded-xl p-6 shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]"
+                className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]"
               >
                 <img
                   src={label === "PLY" ? plyDefault : label === "MICA" ? micaDefault : label === "HARDWARE" ? hardwareDefault : doorDefault}
                   alt={`${label} category`}
-                  className="w-full h-32 object-cover rounded-lg bg-slate-100"
+                  className="w-full h-24 object-cover"
                 />
-                <span className="text-lg font-bold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{label}</span>
+                <span className="py-2 text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{label}</span>
               </button>
             ))}
           </div>
@@ -704,61 +821,50 @@ export function SaleBillForm({
 
         {entryMode === "tiles" && (
           <>
-            {lines.length > 0 && (
-              <div className="bg-white border border-slate-300 rounded-md overflow-hidden shadow-sm mb-8">
+            {lines.length > 0 ? (
+              <div className="overflow-hidden rounded-2xl border border-[#e8ecf1] bg-white shadow-sm">
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse min-w-[720px] text-[13px] font-mono">
-                    <colgroup>
-                      <col style={{ width: 40 }} />
-                      <col />
-                      <col style={{ width: 120 }} />
-                      <col style={{ width: 110 }} />
-                      <col style={{ width: 130 }} />
-                      {isGst && <col style={{ width: 70 }} />}
-                      <col style={{ width: 130 }} />
-                      <col style={{ width: 36 }} />
-                    </colgroup>
-                    <thead>
-                      <tr className="bg-slate-100 text-[11px] uppercase tracking-wide text-slate-600 font-sans">
-                        <th className="border border-slate-300 px-2 py-1.5 text-center font-semibold">#</th>
-                        <th className="border border-slate-300 px-2 py-1.5 text-left font-semibold">Product</th>
-                        <th className="border border-slate-300 px-2 py-1.5 text-center font-semibold">Qty</th>
-                        <th className="border border-slate-300 px-2 py-1.5 text-left font-semibold">Alt Unit</th>
-                        <th className="border border-slate-300 px-2 py-1.5 text-right font-semibold">Rate</th>
-                        {isGst && <th className="border border-slate-300 px-2 py-1.5 text-right font-semibold">GST%</th>}
-                        <th className="border border-slate-300 px-2 py-1.5 text-right font-semibold">Amount</th>
-                        <th className="border border-slate-300 px-2 py-1.5" />
+                  <table className="w-full min-w-[640px] text-sm">
+                    <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="p-3 text-left">Item</th>
+                        <th className="p-3 text-right w-24">Qty</th>
+                        <th className="p-3 text-right w-28">Rate</th>
+                        {isGst && <th className="p-3 text-right w-16">GST%</th>}
+                        <th className="p-3 text-right w-28">Amount</th>
+                        <th className="p-3 w-10" />
                       </tr>
                     </thead>
                     <tbody>
                       {lines.map((l, i) => (
-                        <tr key={i} className="hover:bg-slate-50">
-                          <td className="border border-slate-300 px-2 py-1.5 text-center text-slate-400">{i + 1}</td>
-                          <td className="border border-slate-300 px-2 py-1.5 font-semibold text-slate-700">{l.name}</td>
-                          <td className="border border-slate-300 px-1 py-1 text-center">
+                        <tr key={i} className="border-t border-slate-100">
+                          <td className="p-3 font-medium text-slate-700">
+                            {l.name}
+                            {l.area && <span className="ml-1.5 text-xs text-slate-400">{l.area}</span>}
+                          </td>
+                          <td className="p-2 text-right">
                             <input
                               type="number"
                               min={0}
                               value={l.qty}
                               onChange={(e) => upd(i, { qty: Number(e.target.value) })}
-                              className="w-full bg-transparent text-center tabular-nums focus:outline-none focus:bg-blue-50"
+                              className="h-9 w-20 rounded-lg border border-[#e8ecf1] bg-[#fafbfc] px-2 text-right text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/20"
                               aria-label={`Quantity for ${l.name}`}
                             />
                           </td>
-                          <td className="border border-slate-300 px-2 py-1.5 text-slate-500 tabular-nums">{l.area ?? "—"}</td>
-                          <td className="border border-slate-300 px-1 py-1 text-right">
+                          <td className="p-2 text-right">
                             <input
                               type="number"
                               min={0}
                               value={l.rate}
                               onChange={(e) => upd(i, { rate: Number(e.target.value) })}
-                              className="w-full bg-transparent text-right tabular-nums focus:outline-none focus:bg-blue-50"
+                              className="h-9 w-24 rounded-lg border border-[#e8ecf1] bg-[#fafbfc] px-2 text-right text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/20"
                               aria-label={`Rate for ${l.name}`}
                             />
                           </td>
-                          {isGst && <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums text-slate-500">{l.gst_rate}</td>}
-                          <td className="border border-slate-300 px-2 py-1.5 text-right font-bold tabular-nums text-slate-800">{inr(lineAmount(l))}</td>
-                          <td className="border border-slate-300 px-1 py-1 text-center">
+                          {isGst && <td className="p-3 text-right tabular-nums text-slate-500">{l.gst_rate}%</td>}
+                          <td className="p-3 text-right font-bold tabular-nums">{inr(lineAmount(l))}</td>
+                          <td className="p-2 text-right">
                             <button
                               type="button"
                               aria-label="Remove item"
@@ -773,6 +879,11 @@ export function SaleBillForm({
                     </tbody>
                   </table>
                 </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-8 text-center text-sm text-slate-400">
+                <Plus className="mx-auto mb-2 h-6 w-6" />
+                Tap a tile above to add items.
               </div>
             )}
             <PlyWizardDialog open={plyOpen} onOpenChange={setPlyOpen} onAdd={addPlyLine} />
