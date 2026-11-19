@@ -198,6 +198,11 @@ const SYNONYMS: Array<[RegExp, string]> = [
   // Spring
   [/\bsparing\b/g, "spring"],
   [/\bspring\b/g, "spring"],
+
+  // Inch variants — "inchi" / "inchee" = inch (Indian vernacular)
+  [/\binchi\b/g, "inch"],
+  [/\binchee\b/g, "inch"],
+  [/\binci\b/g, "inch"],
 ];
 
 // ─── Phonetic normalization ───────────────────────────────────────────────────
@@ -297,7 +302,13 @@ function preprocess(raw: string): string {
   // 1. Normalize dimension separators: "8*4" → "8 4", "8×4" → "8 4", digit-x-digit
   s = s.replace(/(\d+)\s*[*×]\s*(\d+)/g, "$1 $2");
   s = s.replace(/\b(\d+)\s*x\s*(\d+)\b/g, "$1 $2");
-  // 2. Single-word fractions (dedh, dhai, aadha, paav…) before number-word map
+  // 2a. Split merged Hindi-num+inch compounds: "doinchi"→"do inch", "teeninchi"→"teen inch"
+  //     Workers say "do inchi" but STT sometimes merges the words.
+  s = s.replace(
+    /\b(ek|ikk?|do|doh|teen|tin|char|chaar|chhar|paanch?|panch|chhe|saat?h?|aath?|aat|nau|das|gyara[h]?|bara[h]?|tera[h]?|choda|pandra[h]?|dedh|dhai|aadha?|sawa|saadhe?|paune?)inch[ie]*/g,
+    "$1 inch"
+  );
+  // 2b. Single-word fractions (dedh, dhai, aadha, paav…) before number-word map
   s = expandFractionSingles(s);
   // 3. Hindi number words → digits
   s = replaceHindiNums(s);
