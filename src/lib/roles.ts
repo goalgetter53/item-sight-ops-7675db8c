@@ -12,6 +12,7 @@ export const EMPLOYEE_NAV_KEYS = [
   "door",
   "alerts",
   "calibrate",
+  "hw_map",
 ] as const;
 
 // Route prefixes an employee is allowed to open directly. Anything outside
@@ -29,6 +30,7 @@ export const EMPLOYEE_ALLOWED_PREFIXES = [
   "/door",
   "/alerts",
   "/calibrate",
+  "/hw-map",
 ] as const;
 
 // Where each role lands after login / when blocked.

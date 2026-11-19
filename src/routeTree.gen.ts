@@ -18,6 +18,7 @@ import { Route as AppCalibrateRouteImport } from './routes/_app.calibrate'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppDaybookRouteImport } from './routes/_app.daybook'
 import { Route as AppDoorRouteImport } from './routes/_app.door'
+import { Route as AppHwMapRouteImport } from './routes/_app.hw-map'
 import { Route as AppInventory2RouteImport } from './routes/_app.inventory2'
 import { Route as AppLedgerRouteImport } from './routes/_app.ledger'
 import { Route as AppPartiesRouteImport } from './routes/_app.parties'
@@ -96,6 +97,11 @@ const AppDoorRoute = AppDoorRouteImport.update({
   path: '/door',
   getParentRoute: () => AppRoute,
 } as any)
+const AppHwMapRoute = AppHwMapRouteImport.update({
+  id: '/hw-map',
+  path: '/hw-map',
+  getParentRoute: () => AppRoute,
+} as any).lazy(() => import('./routes/_app.hw-map.lazy').then((d) => d.Route))
 const AppInventory2Route = AppInventory2RouteImport.update({
   id: '/inventory2',
   path: '/inventory2',
@@ -278,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/daybook': typeof AppDaybookRoute
   '/door': typeof AppDoorRoute
+  '/hw-map': typeof AppHwMapRoute
   '/inventory2': typeof AppInventory2Route
   '/ledger': typeof AppLedgerRoute
   '/parties': typeof AppPartiesRoute
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/daybook': typeof AppDaybookRoute
   '/door': typeof AppDoorRoute
+  '/hw-map': typeof AppHwMapRoute
   '/inventory2': typeof AppInventory2Route
   '/ledger': typeof AppLedgerRoute
   '/parties': typeof AppPartiesRoute
@@ -358,6 +366,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/daybook': typeof AppDaybookRoute
   '/_app/door': typeof AppDoorRoute
+  '/_app/hw-map': typeof AppHwMapRoute
   '/_app/inventory2': typeof AppInventory2Route
   '/_app/ledger': typeof AppLedgerRoute
   '/_app/parties': typeof AppPartiesRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/daybook'
     | '/door'
+    | '/hw-map'
     | '/inventory2'
     | '/ledger'
     | '/parties'
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/daybook'
     | '/door'
+    | '/hw-map'
     | '/inventory2'
     | '/ledger'
     | '/parties'
@@ -478,6 +489,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/daybook'
     | '/_app/door'
+    | '/_app/hw-map'
     | '/_app/inventory2'
     | '/_app/ledger'
     | '/_app/parties'
@@ -581,6 +593,13 @@ declare module '@tanstack/react-router' {
       path: '/door'
       fullPath: '/door'
       preLoaderRoute: typeof AppDoorRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/hw-map': {
+      id: '/_app/hw-map'
+      path: '/hw-map'
+      fullPath: '/hw-map'
+      preLoaderRoute: typeof AppHwMapRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/inventory2': {
@@ -795,6 +814,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDaybookRoute: typeof AppDaybookRoute
   AppDoorRoute: typeof AppDoorRoute
+  AppHwMapRoute: typeof AppHwMapRoute
   AppInventory2Route: typeof AppInventory2Route
   AppLedgerRoute: typeof AppLedgerRoute
   AppPartiesRoute: typeof AppPartiesRoute
@@ -830,6 +850,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDaybookRoute: AppDaybookRoute,
   AppDoorRoute: AppDoorRoute,
+  AppHwMapRoute: AppHwMapRoute,
   AppInventory2Route: AppInventory2Route,
   AppLedgerRoute: AppLedgerRoute,
   AppPartiesRoute: AppPartiesRoute,
