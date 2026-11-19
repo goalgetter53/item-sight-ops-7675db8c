@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { inr, fmtDateTime } from "@/lib/codes";
+import { toast } from "sonner";
 import { TableSkeleton } from "@/components/erp/Skeletons";
 import { NewProductDialog } from "@/components/erp/NewProductDialog";
 import { AddParameterDialog } from "@/components/erp/AddParameterDialog";
@@ -36,6 +37,10 @@ function Inventory() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyProduct, setHistoryProduct] = useState<any>(null);
   const [historyRows, setHistoryRows] = useState<any[] | null>(null);
+  const [editQtyOpen, setEditQtyOpen] = useState(false);
+  const [editQtyProduct, setEditQtyProduct] = useState<any>(null);
+  const [editQtyValue, setEditQtyValue] = useState(0);
+  const [editQtyBusy, setEditQtyBusy] = useState(false);
   const nav = useNavigate();
 
   const { data, isLoading: loading, refetch } = useQuery({
@@ -166,6 +171,44 @@ function Inventory() {
     setHistoryRows(h ?? []);
   };
 
+  const saveEditQty = async () => {
+    if (!editQtyProduct) return;
+    const current = counts[editQtyProduct.id] ?? 0;
+    const delta = editQtyValue - current;
+    setEditQtyBusy(true);
+    try {
+      if (delta > 0) {
+        const rows = Array.from({ length: delta }, () => ({
+          product_id: editQtyProduct.id,
+          status: "available",
+        }));
+        const { error } = await supabase.from("item_instances").insert(rows);
+        if (error) throw error;
+      } else if (delta < 0) {
+        const { data: toMark } = await supabase
+          .from("item_instances")
+          .select("id")
+          .eq("product_id", editQtyProduct.id)
+          .eq("status", "available")
+          .limit(-delta);
+        if (toMark && toMark.length > 0) {
+          const ids = toMark.map((r: any) => r.id);
+          const { error } = await supabase
+            .from("item_instances")
+            .update({ status: "damaged" })
+            .in("id", ids);
+          if (error) throw error;
+        }
+      }
+      await refetch();
+      setEditQtyOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to update stock");
+    } finally {
+      setEditQtyBusy(false);
+    }
+  };
+
   const allChecked = sorted.length > 0 && sorted.every((p) => selected.has(p.id));
   const toggleAll = () => {
     const s = new Set(selected);
@@ -277,10 +320,14 @@ function Inventory() {
         </TableCell>
         <TableCell className="text-right pr-6" onClick={(e) => e.stopPropagation()}>
           <div className="inline-flex items-center gap-0.5">
-            <Button asChild variant="ghost" size="icon" className="h-8 w-8" title="Edit item">
-              <Link to="/inventory/$productId" params={{ productId: p.id }}>
-                <Pencil className="h-4 w-4" />
-              </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title="Edit quantity"
+              onClick={(e) => { e.stopPropagation(); setEditQtyProduct(p); setEditQtyValue(counts[p.id] ?? 0); setEditQtyOpen(true); }}
+            >
+              <Pencil className="h-4 w-4" />
             </Button>
             <Button
               asChild
@@ -508,6 +555,35 @@ function Inventory() {
               </ol>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editQtyOpen} onOpenChange={setEditQtyOpen}>
+        <DialogContent className="max-w-xs rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Stock Quantity</DialogTitle>
+          </DialogHeader>
+          {editQtyProduct && (
+            <div className="space-y-4 pt-1">
+              <div className="text-sm font-semibold text-slate-700">{editQtyProduct.name}</div>
+              <div className="text-xs text-slate-500">Current qty: <b>{counts[editQtyProduct.id] ?? 0}</b></div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">New quantity</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editQtyValue}
+                  onChange={(e) => setEditQtyValue(Math.max(0, Number(e.target.value)))}
+                  className="h-10 text-base"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter") saveEditQty(); }}
+                />
+              </div>
+              <Button className="w-full" onClick={saveEditQty} disabled={editQtyBusy}>
+                {editQtyBusy ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>

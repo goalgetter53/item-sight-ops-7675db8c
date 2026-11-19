@@ -24,6 +24,7 @@ import { SizePickerField } from "@/components/erp/SizePickerField";
 export const Route = createFileRoute("/_app/door")({
   validateSearch: (search: Record<string, unknown>) => ({
     returnTo: typeof search.returnTo === "string" ? search.returnTo : undefined,
+    doorType: typeof search.doorType === "string" ? search.doorType : undefined,
   }),
   component: DoorPage,
 });

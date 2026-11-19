@@ -20,6 +20,7 @@ import { MicaWizardDialog } from "@/components/erp/MicaWizardDialog";
 import { HardwareWizardDialog } from "@/components/erp/HardwareWizardDialog";
 import { adjustComboStock, type ComboCategory } from "@/lib/comboStock";
 import { UpiQrDialog } from "@/components/erp/UpiQrDialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 // Inactive placeholder products that custom wizard lines reference (sales_items.product_id is NOT NULL).
 const PLY_CUSTOM_PRODUCT_ID = "3b53f4d0-550d-4206-b5a7-582a1e18fc09";
@@ -98,6 +99,7 @@ export function SaleBillForm({
   const [plyOpen, setPlyOpen] = useState(false);
   const [micaOpen, setMicaOpen] = useState(false);
   const [hardwareOpen, setHardwareOpen] = useState(false);
+  const [doorChooserOpen, setDoorChooserOpen] = useState(false);
   const [upiQrOpen, setUpiQrOpen] = useState(false);
   const [draftSub, setDraftSub] = useState<any | null>(null);
   const [draftQuery, setDraftQuery] = useState("");
@@ -181,7 +183,7 @@ export function SaleBillForm({
     };
   }, [draftFocused, draftQuery]);
 
-  const goAddDoor = () => {
+  const goAddDoor = (doorType?: string) => {
     try {
       const cust = customers.find((c) => c.id === customerId);
       sessionStorage.setItem(`sale_draft_${user?.id ?? "anon"}`, JSON.stringify({
@@ -189,9 +191,10 @@ export function SaleBillForm({
         customerName: cust?.name ?? "",
         invoiceNo: invoicePreview,
         paymentMode, discount, lines,
+        ...(doorType ? { doorType } : {}),
       }));
     } catch {}
-    nav({ to: "/door", search: { returnTo: "sale" } as any });
+    nav({ to: "/door", search: { returnTo: "sale", ...(doorType ? { doorType } : {}) } as any });
   };
 
   useEffect(() => {
@@ -805,7 +808,7 @@ export function SaleBillForm({
               <button
                 key={label}
                 type="button"
-                onClick={label === "DOORS" ? goAddDoor : label === "PLY" ? () => setPlyOpen(true) : label === "MICA" ? () => setMicaOpen(true) : () => setHardwareOpen(true)}
+                onClick={label === "DOORS" ? () => setDoorChooserOpen(true) : label === "PLY" ? () => setPlyOpen(true) : label === "MICA" ? () => setMicaOpen(true) : () => setHardwareOpen(true)}
                 className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]"
               >
                 <img
@@ -889,6 +892,29 @@ export function SaleBillForm({
             <PlyWizardDialog open={plyOpen} onOpenChange={setPlyOpen} onAdd={addPlyLine} />
             <MicaWizardDialog open={micaOpen} onOpenChange={setMicaOpen} onAdd={addMicaLine} />
             <HardwareWizardDialog open={hardwareOpen} onOpenChange={setHardwareOpen} onAdd={addHardwareLine} />
+            <Dialog open={doorChooserOpen} onOpenChange={setDoorChooserOpen}>
+              <DialogContent className="max-w-xs rounded-2xl p-6">
+                <DialogTitle className="text-base font-extrabold text-slate-900 mb-4">Add Door</DialogTitle>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setDoorChooserOpen(false); goAddDoor(); }}
+                    className="flex flex-col items-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white p-4 shadow-sm hover:border-[#7c3aed] hover:shadow-md active:scale-[0.97] transition-all"
+                  >
+                    <DoorOpen className="h-8 w-8 text-[#7c3aed]" />
+                    <span className="text-sm font-bold text-slate-700">Custom Door</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDoorChooserOpen(false); goAddDoor("wpc"); }}
+                    className="flex flex-col items-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white p-4 shadow-sm hover:border-[#7c3aed] hover:shadow-md active:scale-[0.97] transition-all"
+                  >
+                    <DoorOpen className="h-8 w-8 text-[#7c3aed]" />
+                    <span className="text-sm font-bold text-slate-700">WPC Door</span>
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </>
         )}
 
@@ -915,7 +941,7 @@ export function SaleBillForm({
             type="button"
             size="sm"
             variant="outline"
-            onClick={goAddDoor}
+            onClick={() => setDoorChooserOpen(true)}
             className="h-8 gap-1.5 border-[#a78bfa] text-[#7c3aed] hover:bg-[#a78bfa]/10 shrink-0"
           >
             <DoorOpen className="h-3.5 w-3.5" />
