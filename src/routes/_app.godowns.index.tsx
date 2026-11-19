@@ -16,7 +16,7 @@ import {
 import { inr } from "@/lib/codes";
 import { toast } from "sonner";
 import {
-  Plus, Warehouse, Boxes, Package,
+  Plus, Warehouse, Boxes, Package, Pencil, Trash2,
 } from "lucide-react";
 import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { GodownStockInDialog } from "@/components/erp/GodownStockInDialog";
@@ -32,6 +32,9 @@ type Godown = {
 function Godowns() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Godown | null>(null);
+  const [deleting, setDeleting] = useState<Godown | null>(null);
+  const [delBusy, setDelBusy] = useState(false);
   const [selectedId, setSelectedId] = useState<string>("all");
   const [stockIn, setStockIn] = useState<{ id: string; name: string } | null>(null);
   const [stockOut, setStockOut] = useState<{ id: string; name: string } | null>(null);
@@ -54,6 +57,17 @@ function Godowns() {
   const godowns = data?.godowns ?? [];
   const instances = data?.instances ?? [];
   const reload = () => queryClient.invalidateQueries({ queryKey: ["godowns-stock"] });
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setDelBusy(true);
+    const { error } = await supabase.from("godowns").delete().eq("id", deleting.id);
+    setDelBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Godown deleted");
+    setDeleting(null);
+    reload();
+  };
 
   const byGodown = useMemo(() => {
     const map = new Map<string, { count: number; value: number }>();
@@ -125,7 +139,7 @@ function Godowns() {
                 <Plus className="h-4 w-4" /> New Godown
               </Button>
             </DialogTrigger>
-            <NewGodownDialog
+            <GodownFormDialog
               onClose={() => setOpen(false)}
               onSaved={() => { setOpen(false); reload(); }}
             />
@@ -142,6 +156,53 @@ function Godowns() {
           <KpiCard icon={Package} iconBg="bg-primary/10 text-primary"
             label="Stock Value" value={inr(totals.totalValue)} hint="Across all godowns" />
         </div>
+
+        {/* Godowns list */}
+        <Card className="overflow-hidden">
+          <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold tracking-tight">Godowns</h2>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-5">Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Manager</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead className="pr-5 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {godowns.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                    No godowns yet. Click "New Godown" to add one.
+                  </TableCell>
+                </TableRow>
+              )}
+              {godowns.map((g) => (
+                <TableRow key={g.id}>
+                  <TableCell className="pl-5 font-medium">{g.name}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{g.code ?? "—"}</TableCell>
+                  <TableCell>{g.manager_name ?? "—"}</TableCell>
+                  <TableCell>{g.phone ?? "—"}</TableCell>
+                  <TableCell className="pr-5 text-right">
+                    <div className="flex justify-end gap-1">
+                      <button type="button" onClick={() => setEditing(g)}
+                        className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-blue-600">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={() => setDeleting(g)}
+                        className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-red-500">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
 
         {/* Stock table */}
         <Card className="overflow-hidden">
@@ -205,6 +266,31 @@ function Godowns() {
           </Table>
         </Card>
       </div>
+      {/* Edit godown dialog */}
+      {editing && (
+        <Dialog open onOpenChange={(v) => { if (!v) setEditing(null); }}>
+          <GodownFormDialog
+            initial={editing}
+            onClose={() => setEditing(null)}
+            onSaved={() => { setEditing(null); reload(); }}
+          />
+        </Dialog>
+      )}
+
+      {/* Delete confirm dialog */}
+      <Dialog open={!!deleting} onOpenChange={(v) => { if (!v) setDeleting(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Delete "{deleting?.name}"?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">This cannot be undone. Stock records referencing this godown will be unassigned.</p>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleting(null)} disabled={delBusy}>Cancel</Button>
+            <Button className="bg-red-500 hover:bg-red-600" onClick={confirmDelete} disabled={delBusy}>
+              {delBusy ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {stockIn && (
         <GodownStockInDialog
           open={!!stockIn}
@@ -227,36 +313,37 @@ function Godowns() {
   );
 }
 
-function NewGodownDialog({
-  onClose, onSaved,
-}: { onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [address, setAddress] = useState("");
-  const [manager, setManager] = useState("");
-  const [phone, setPhone] = useState("");
+function GodownFormDialog({
+  initial, onClose, onSaved,
+}: { initial?: Godown; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(initial?.name ?? "");
+  const [code, setCode] = useState(initial?.code ?? "");
+  const [address, setAddress] = useState(initial?.address ?? "");
+  const [manager, setManager] = useState(initial?.manager_name ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
   const [busy, setBusy] = useState(false);
+  const isEdit = !!initial;
 
   const save = async () => {
     if (!name.trim()) { toast.error("Name is required"); return; }
     setBusy(true);
-    const { error } = await supabase.from("godowns").insert({
-      name: name.trim(),
-      code: code.trim() || null,
-      address: address.trim() || null,
-      manager_name: manager.trim() || null,
-      phone: phone.trim() || null,
-      active: true,
-    });
+    const payload = {
+      name: name.trim(), code: code.trim() || null,
+      address: address.trim() || null, manager_name: manager.trim() || null,
+      phone: phone.trim() || null, active: true,
+    };
+    const res = isEdit
+      ? await supabase.from("godowns").update(payload).eq("id", initial!.id)
+      : await supabase.from("godowns").insert(payload);
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Godown created");
+    if (res.error) { toast.error(res.error.message); return; }
+    toast.success(isEdit ? "Godown updated" : "Godown created");
     onSaved();
   };
 
   return (
     <DialogContent className="sm:max-w-[480px]">
-      <DialogHeader><DialogTitle>New Godown</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isEdit ? "Edit Godown" : "New Godown"}</DialogTitle></DialogHeader>
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">
@@ -285,7 +372,7 @@ function NewGodownDialog({
       </div>
       <DialogFooter>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
-        <Button onClick={save} disabled={busy}>{busy ? "Saving…" : "Create Godown"}</Button>
+        <Button onClick={save} disabled={busy}>{busy ? "Saving…" : isEdit ? "Save changes" : "Create Godown"}</Button>
       </DialogFooter>
     </DialogContent>
   );

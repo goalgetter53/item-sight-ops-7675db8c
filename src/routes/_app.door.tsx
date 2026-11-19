@@ -14,9 +14,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { inr, fmtDate } from "@/lib/codes";
 import { toast } from "sonner";
-import { Plus, DoorOpen, Trash2, FileText } from "lucide-react";
+import { Plus, DoorOpen, Trash2, FileText, Pencil, Settings2 } from "lucide-react";
 import { QuickCreatePartyDialog } from "@/components/erp/QuickCreatePartyDialog";
 import { buildDoorOrderPdf, openPdfInNewTab } from "@/lib/invoice-pdf";
 import { SizePickerField } from "@/components/erp/SizePickerField";
@@ -133,7 +136,10 @@ function DoorPage() {
   const search = Route.useSearch();
   const isFromSale = search.returnTo === "sale";
   const nav = useNavigate();
-  const [tab, setTab] = useState<Category>("general");
+  const [tab, setTab] = useState<Category | "types">("general");
+  const [dtEditing, setDtEditing] = useState<DoorType | null | "new">(null);
+  const [dtDeleting, setDtDeleting] = useState<DoorType | null>(null);
+  const [dtBusy, setDtBusy] = useState(false);
   const queryClient = useQueryClient();
   const { data, isLoading: loading } = useQuery({
     queryKey: ["door-data"],
@@ -163,6 +169,17 @@ function DoorPage() {
 
   const selectableDoorTypes = useMemo(() => mergeDefaultDoorTypes(doorTypes), [doorTypes]);
 
+  const confirmDeleteDoorType = async () => {
+    if (!dtDeleting || dtDeleting.id.startsWith("default:")) return;
+    setDtBusy(true);
+    const { error } = await supabase.from("door_types").delete().eq("id", dtDeleting.id);
+    setDtBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Door type deleted");
+    setDtDeleting(null);
+    reload();
+  };
+
   const filtered = useMemo(
     () => orders.filter((o) => o.category === tab),
     [orders, tab],
@@ -187,10 +204,11 @@ function DoorPage() {
             </Button>
           </div>
         )}
-        <Tabs value={tab} onValueChange={(v) => setTab(v as Category)}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
           <TabsList className="mb-5">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="vypaari">Vypaari</TabsTrigger>
+            <TabsTrigger value="types"><Settings2 className="h-3.5 w-3.5 mr-1.5" />Door Types</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-5">
@@ -216,7 +234,71 @@ function DoorPage() {
             />
             {!isFromSale && <OrdersTable rows={filtered} loading={loading} />}
           </TabsContent>
+
+          <TabsContent value="types">
+            <Card className="overflow-hidden">
+              <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+                <h2 className="text-lg font-semibold tracking-tight">Door Types</h2>
+                <Button size="sm" onClick={() => setDtEditing("new")}><Plus className="h-4 w-4 mr-1.5" />Add Type</Button>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-5">Name</TableHead>
+                    <TableHead className="text-right">Rate (₹/sqft)</TableHead>
+                    <TableHead className="pr-5 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectableDoorTypes.map((dt) => (
+                    <TableRow key={dt.id}>
+                      <TableCell className="pl-5 font-medium">{dt.name}</TableCell>
+                      <TableCell className="text-right tabular-nums">{inr(dt.rate)}</TableCell>
+                      <TableCell className="pr-5 text-right">
+                        <div className="flex justify-end gap-1">
+                          <button type="button" onClick={() => setDtEditing(dt)}
+                            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-blue-600">
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          {!dt.id.startsWith("default:") && (
+                            <button type="button" onClick={() => setDtDeleting(dt)}
+                              className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-red-500">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        {/* Door type add/edit dialog */}
+        {dtEditing && (
+          <Dialog open onOpenChange={(v) => { if (!v) setDtEditing(null); }}>
+            <DoorTypeFormDialog
+              initial={dtEditing === "new" ? undefined : dtEditing}
+              onClose={() => setDtEditing(null)}
+              onSaved={() => { setDtEditing(null); reload(); }}
+            />
+          </Dialog>
+        )}
+        {/* Door type delete confirm */}
+        <Dialog open={!!dtDeleting} onOpenChange={(v) => { if (!v) setDtDeleting(null); }}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader><DialogTitle>Delete "{dtDeleting?.name}"?</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">This door type will be removed. Existing orders referencing it won't be affected.</p>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setDtDeleting(null)} disabled={dtBusy}>Cancel</Button>
+              <Button className="bg-red-500 hover:bg-red-600" onClick={confirmDeleteDoorType} disabled={dtBusy}>
+                {dtBusy ? "Deleting…" : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
@@ -1168,6 +1250,50 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function DoorTypeFormDialog({
+  initial, onClose, onSaved,
+}: { initial?: DoorType; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(initial?.name ?? "");
+  const [rate, setRate] = useState(initial?.rate != null ? String(initial.rate) : "");
+  const [busy, setBusy] = useState(false);
+  const isEdit = !!initial && !initial.id.startsWith("default:");
+
+  const save = async () => {
+    if (!name.trim()) { toast.error("Name is required"); return; }
+    setBusy(true);
+    const payload = { name: name.trim(), rate: Number(rate) || 0, active: true };
+    const res = isEdit
+      ? await supabase.from("door_types").update(payload).eq("id", initial!.id)
+      : await supabase.from("door_types").upsert(payload, { onConflict: "name" });
+    setBusy(false);
+    if (res.error) { toast.error(res.error.message); return; }
+    toast.success(isEdit ? "Updated" : "Added");
+    onSaved();
+  };
+
+  return (
+    <DialogContent className="sm:max-w-sm">
+      <DialogHeader><DialogTitle>{isEdit ? "Edit Door Type" : "Add Door Type"}</DialogTitle></DialogHeader>
+      <div className="space-y-3">
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Name</label>
+          <Input autoFocus value={name} onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") save(); }} placeholder="e.g. F-Hard" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Rate (₹/sqft)</label>
+          <Input type="number" inputMode="numeric" value={rate} onChange={(e) => setRate(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") save(); }} placeholder="0" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button onClick={save} disabled={busy}>{busy ? "Saving…" : isEdit ? "Save" : "Add"}</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 function OrdersTable({ rows, loading }: { rows: DoorOrder[]; loading: boolean }) {
   return (
     <Card className="overflow-hidden">
@@ -1214,3 +1340,4 @@ function OrdersTable({ rows, loading }: { rows: DoorOrder[]; loading: boolean })
     </Card>
   );
 }
+
