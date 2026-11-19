@@ -18,6 +18,7 @@ import { QuickCreatePartyDialog } from "@/components/erp/QuickCreatePartyDialog"
 import { PlyWizardDialog } from "@/components/erp/PlyWizardDialog";
 import { MicaWizardDialog } from "@/components/erp/MicaWizardDialog";
 import { HardwareWizardDialog } from "@/components/erp/HardwareWizardDialog";
+import { VoiceHardwareTile } from "@/components/erp/VoiceHardwareTile";
 import { adjustComboStock, type ComboCategory } from "@/lib/comboStock";
 import { UpiQrDialog } from "@/components/erp/UpiQrDialog";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -99,6 +100,7 @@ export function SaleBillForm({
   const [plyOpen, setPlyOpen] = useState(false);
   const [micaOpen, setMicaOpen] = useState(false);
   const [hardwareOpen, setHardwareOpen] = useState(false);
+  const [hwInitialPath, setHwInitialPath] = useState<import("@/lib/inventoryNodes").InvNode[] | undefined>(undefined);
   const [doorChooserOpen, setDoorChooserOpen] = useState(false);
   const [upiQrOpen, setUpiQrOpen] = useState(false);
   const [draftSub, setDraftSub] = useState<any | null>(null);
@@ -804,21 +806,34 @@ export function SaleBillForm({
 
         {entryMode === "tiles" ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {(["PLY", "MICA", "HARDWARE", "DOORS"] as const).map((label) => (
-              <button
-                key={label}
-                type="button"
-                onClick={label === "DOORS" ? () => setDoorChooserOpen(true) : label === "PLY" ? () => setPlyOpen(true) : label === "MICA" ? () => setMicaOpen(true) : () => setHardwareOpen(true)}
-                className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]"
-              >
-                <img
-                  src={label === "PLY" ? plyDefault : label === "MICA" ? micaDefault : label === "HARDWARE" ? hardwareDefault : doorDefault}
-                  alt={`${label} category`}
-                  className="w-full h-24 object-cover"
-                />
-                <span className="py-2 text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{label}</span>
-              </button>
-            ))}
+            {(["PLY", "MICA", "HARDWARE", "DOORS"] as const).map((label) => {
+              if (label === "HARDWARE") {
+                return (
+                  <VoiceHardwareTile
+                    key="HARDWARE"
+                    imgSrc={hardwareDefault}
+                    label="HARDWARE"
+                    onNormalClick={() => { setHwInitialPath(undefined); setHardwareOpen(true); }}
+                    onVoicePick={(path) => { setHwInitialPath(path); setHardwareOpen(true); }}
+                  />
+                );
+              }
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={label === "DOORS" ? () => setDoorChooserOpen(true) : label === "PLY" ? () => setPlyOpen(true) : () => setMicaOpen(true)}
+                  className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]"
+                >
+                  <img
+                    src={label === "PLY" ? plyDefault : label === "MICA" ? micaDefault : doorDefault}
+                    alt={`${label} category`}
+                    className="w-full h-24 object-cover"
+                  />
+                  <span className="py-2 text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{label}</span>
+                </button>
+              );
+            })}
           </div>
         ) : null}
 
@@ -891,7 +906,7 @@ export function SaleBillForm({
             )}
             <PlyWizardDialog open={plyOpen} onOpenChange={setPlyOpen} onAdd={addPlyLine} />
             <MicaWizardDialog open={micaOpen} onOpenChange={setMicaOpen} onAdd={addMicaLine} />
-            <HardwareWizardDialog open={hardwareOpen} onOpenChange={setHardwareOpen} onAdd={addHardwareLine} />
+            <HardwareWizardDialog open={hardwareOpen} onOpenChange={(v) => { if (!v) setHwInitialPath(undefined); setHardwareOpen(v); }} onAdd={addHardwareLine} initialPath={hwInitialPath} />
             <Dialog open={doorChooserOpen} onOpenChange={setDoorChooserOpen}>
               <DialogContent className="max-w-xs rounded-2xl p-6">
                 <DialogTitle className="text-base font-extrabold text-slate-900 mb-4">Add Door</DialogTitle>

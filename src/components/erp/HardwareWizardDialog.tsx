@@ -23,12 +23,13 @@ export function HardwareWizardDialog({
   open,
   onOpenChange,
   onAdd,
+  initialPath,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onAdd: (item: Added) => void;
+  initialPath?: InvNode[];
 }) {
-  // path = nodes drilled into, under the HARDWARE root. phase: browse tree, then entry.
   const [path, setPath] = useState<InvNode[]>([]);
   const [phase, setPhase] = useState<"browse" | "amount" | "qty" | "disc">("browse");
   const [amount, setAmount] = useState("");
@@ -41,7 +42,12 @@ export function HardwareWizardDialog({
   const { data: children = [], isLoading } = useChildren(parentId);
 
   const reset = () => {
-    setPath([]); setPhase("browse"); setAmount(""); setQty("1"); setDiscMode("pct"); setDisc("");
+    if (initialPath?.length) {
+      setPath(initialPath); setPhase("amount");
+    } else {
+      setPath([]); setPhase("browse");
+    }
+    setAmount(""); setQty("1"); setDiscMode("pct"); setDisc("");
   };
   const close = () => { onOpenChange(false); reset(); };
 

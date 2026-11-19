@@ -28,11 +28,13 @@ export function PurchaseItemDialog({
   open,
   onOpenChange,
   onAdd,
+  initialPath,
 }: {
   category: ComboCategory | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onAdd: (item: PurchaseItem) => void;
+  initialPath?: InvNode[];
 }) {
   const [path, setPath] = useState<InvNode[]>([]);
   const [phase, setPhase] = useState<"browse" | "mica" | "entry">("browse");
@@ -46,9 +48,16 @@ export function PurchaseItemDialog({
   const parentId = path.length ? path[path.length - 1].id : rootId;
   const { data: children = [], isLoading } = useChildren(parentId);
 
-  const reset = () => { setPath([]); setPhase("browse"); setMicaNo(""); setQty("1"); setRate(""); };
+  const reset = () => {
+    if (initialPath?.length && (category ?? "HARDWARE") === "HARDWARE") {
+      setPath(initialPath); setPhase("entry");
+    } else {
+      setPath([]); setPhase("browse");
+    }
+    setMicaNo(""); setQty("1"); setRate("");
+  };
   const close = () => { onOpenChange(false); reset(); };
-  useEffect(() => { if (open) reset(); /* fresh each open */ }, [open, category]);
+  useEffect(() => { if (open) reset(); }, [open, category, initialPath]);
 
   // Reached a leaf (drilled node with no children) → MICA asks a number, others price.
   useEffect(() => {

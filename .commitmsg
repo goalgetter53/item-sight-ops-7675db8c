@@ -1,0 +1,12 @@
+feat: redesign Print Station screen to light theme
+
+Replace inline dark-mode style objects with Tailwind light-theme classes
+matching the app's design system (white bg, border-[#e8ecf1], rounded-2xl).
+
+- White/light-grey background, no more #0f172a dark canvas
+- Header: white bar with blue Printer icon badge, pill status chip
+- Pending column: amber tint header; Printed: green tint header
+- Summary strip shows pending/printed counts at a glance
+- Bill cards: clean white/slate-50, blue Print button, grey Reprint
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>

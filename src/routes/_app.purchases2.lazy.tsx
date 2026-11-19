@@ -10,6 +10,8 @@ import { PurchaseItemDialog, type PurchaseItem } from "@/components/erp/Purchase
 import { adjustComboStock, type ComboCategory } from "@/lib/comboStock";
 import { plyDefault, micaDefault, hardwareDefault } from "@/lib/tile-images";
 import { Plus, Trash2, Check, ArrowLeft, DoorOpen } from "lucide-react";
+import { VoiceHardwareTile } from "@/components/erp/VoiceHardwareTile";
+import type { InvNode } from "@/lib/inventoryNodes";
 import { VoiceSearchPicker } from "@/components/erp/VoiceSearchPicker";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -34,6 +36,7 @@ function Purchase2() {
   const [discount, setDiscount] = useState(0);
   const [lines, setLines] = useState<Line[]>([]);
   const [wizard, setWizard] = useState<ComboCategory | null>(null);
+  const [hwInitialPath, setHwInitialPath] = useState<InvNode[] | undefined>(undefined);
   const [doorChooserOpen, setDoorChooserOpen] = useState(false);
   const [doorAddOpen, setDoorAddOpen] = useState(false);
   const [doorAddType, setDoorAddType] = useState<"custom" | "wpc">("custom");
@@ -172,13 +175,26 @@ function Purchase2() {
 
         {/* Tiles */}
         <div className="grid grid-cols-4 gap-3">
-          {TILES.map((t) => (
-            <button key={t} type="button" onClick={() => setWizard(t)}
-              className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]">
-              <img src={t === "PLY" ? plyDefault : t === "MICA" ? micaDefault : hardwareDefault} alt={t} className="w-full h-24 object-cover" />
-              <span className="py-2 text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{t}</span>
-            </button>
-          ))}
+          {TILES.map((t) => {
+            if (t === "HARDWARE") {
+              return (
+                <VoiceHardwareTile
+                  key="HARDWARE"
+                  imgSrc={hardwareDefault}
+                  label="HARDWARE"
+                  onNormalClick={() => { setHwInitialPath(undefined); setWizard("HARDWARE"); }}
+                  onVoicePick={(path) => { setHwInitialPath(path); setWizard("HARDWARE"); }}
+                />
+              );
+            }
+            return (
+              <button key={t} type="button" onClick={() => setWizard(t)}
+                className="group overflow-hidden flex flex-col items-center rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#3b82f6] hover:shadow-md active:scale-[0.98]">
+                <img src={t === "PLY" ? plyDefault : micaDefault} alt={t} className="w-full h-24 object-cover" />
+                <span className="py-2 text-sm font-extrabold tracking-wide text-slate-700 group-hover:text-[#3b82f6]">{t}</span>
+              </button>
+            );
+          })}
           <button type="button" onClick={() => setDoorChooserOpen(true)}
             className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-[#e8ecf1] bg-white shadow-sm transition-all hover:border-[#7c3aed] hover:shadow-md active:scale-[0.98] h-full min-h-[108px]">
             <DoorOpen className="h-10 w-10 text-[#7c3aed] group-hover:scale-110 transition-transform" />
@@ -238,7 +254,7 @@ function Purchase2() {
         )}
       </div>
 
-      <PurchaseItemDialog category={wizard} open={wizard !== null} onOpenChange={(v) => !v && setWizard(null)} onAdd={addItem} />
+      <PurchaseItemDialog category={wizard} open={wizard !== null} onOpenChange={(v) => { if (!v) { setWizard(null); setHwInitialPath(undefined); } }} onAdd={addItem} initialPath={wizard === "HARDWARE" ? hwInitialPath : undefined} />
 
       {/* Door chooser */}
       <Dialog open={doorChooserOpen} onOpenChange={setDoorChooserOpen}>
