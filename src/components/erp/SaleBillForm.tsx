@@ -83,7 +83,7 @@ export function SaleBillForm({
   const cfg = useUiConfig();
   const f = cfg.forms.new_sale.fields;
 
-  const storageKey = `sale_tab_${tabId}`;
+  const storageKey = `sale_tab_${user?.id ?? "anon"}_${tabId}`;
 
   const [customerId, setCustomerId] = useState("");
   const [customerState, setCustomerState] = useState<string>("");
@@ -139,7 +139,7 @@ export function SaleBillForm({
             toast.success(`${doorLines.length} door line(s) added to bill`);
           }
           sessionStorage.removeItem("pending_door_lines");
-          sessionStorage.removeItem("sale_draft");
+          sessionStorage.removeItem(`sale_draft_${user?.id ?? "anon"}`);
         }
       }
     } catch (e) { console.error(e); }
@@ -184,7 +184,7 @@ export function SaleBillForm({
   const goAddDoor = () => {
     try {
       const cust = customers.find((c) => c.id === customerId);
-      sessionStorage.setItem("sale_draft", JSON.stringify({
+      sessionStorage.setItem(`sale_draft_${user?.id ?? "anon"}`, JSON.stringify({
         customerId,
         customerName: cust?.name ?? "",
         invoiceNo: invoicePreview,

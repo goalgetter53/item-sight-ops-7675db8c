@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { X, Plus } from "lucide-react";
 import { SaleBillForm, type ProductRow } from "@/components/erp/SaleBillForm";
+import { useAuth } from "@/lib/auth-store";
 
 const MAX_TABS = 5;
 
@@ -40,6 +41,10 @@ async function fetchSalePageData() {
 // draft keys use random tab ids so they can't collide. `entryMode` picks how
 // items get added inside each bill ("scan" grid vs placeholder tiles).
 export function NewSaleScreen({ entryMode = "scan", tabsKey }: { entryMode?: "scan" | "tiles"; tabsKey: string }) {
+  const user = useAuth(s => s.user);
+  const uid = user?.id ?? "anon";
+  const userTabsKey = `${tabsKey}_${uid}`;
+
   const { data, isLoading } = useQuery({
     queryKey: ["sale-page-data"],
     queryFn: fetchSalePageData,
@@ -56,7 +61,7 @@ export function NewSaleScreen({ entryMode = "scan", tabsKey }: { entryMode?: "sc
 
   const [tabs, setTabs] = useState<Tab[]>(() => {
     try {
-      const raw = sessionStorage.getItem(tabsKey);
+      const raw = sessionStorage.getItem(userTabsKey);
       if (raw) {
         const parsed = JSON.parse(raw) as { tabs?: Tab[] };
         if (Array.isArray(parsed.tabs) && parsed.tabs.length) {
@@ -68,7 +73,7 @@ export function NewSaleScreen({ entryMode = "scan", tabsKey }: { entryMode?: "sc
   });
   const [activeId, setActiveId] = useState<string>(() => {
     try {
-      const raw = sessionStorage.getItem(tabsKey);
+      const raw = sessionStorage.getItem(userTabsKey);
       if (raw) {
         const parsed = JSON.parse(raw) as { tabs?: Tab[]; activeId?: string };
         if (parsed.activeId && parsed.tabs?.some((t) => t.id === parsed.activeId)) {
@@ -88,9 +93,9 @@ export function NewSaleScreen({ entryMode = "scan", tabsKey }: { entryMode?: "sc
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(tabsKey, JSON.stringify({ tabs, activeId }));
+      sessionStorage.setItem(userTabsKey, JSON.stringify({ tabs, activeId }));
     } catch {}
-  }, [tabs, activeId, tabsKey]);
+  }, [tabs, activeId, userTabsKey]);
 
   const [extraCustomers, setExtraCustomers] = useState<Customer[]>([]);
 
@@ -110,7 +115,7 @@ export function NewSaleScreen({ entryMode = "scan", tabsKey }: { entryMode?: "sc
   };
 
   const closeTab = (id: string) => {
-    try { sessionStorage.removeItem(`sale_tab_${id}`); } catch {}
+    try { sessionStorage.removeItem(`sale_tab_${uid}_${id}`); } catch {}
     setTabs((prev) => {
       if (prev.length <= 1) {
         const t = { id: newId() };
