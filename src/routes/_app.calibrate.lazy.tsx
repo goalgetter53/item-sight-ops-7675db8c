@@ -20,7 +20,7 @@ const CAT_COLOR: Record<CategoryKey, string> = {
   DOOR: "bg-sky-100 text-sky-800 border-sky-300",
 };
 
-type Attempt = { raw: string; matchedName: string | null; score: number };
+type Attempt = { raw: string; matchedName: string | null; score: number; saved?: boolean };
 
 function CalibratePage() {
   const { data: leaves = [], isLoading } = useAllLeaves();
@@ -35,6 +35,9 @@ function CalibratePage() {
   const [liveText, setLiveText] = useState("");
   const [finalText, setFinalText] = useState("");
   const recRef = useRef<any>(null);
+  // stable refs so mic closure always sees latest values
+  const currentRef = useRef<AnyLeaf | undefined>(undefined);
+  const saveFn = useRef<(entry: { item_name: string; category: string; raw_text: string }) => void>(() => {});
 
   // match result from final text
   const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -42,6 +45,9 @@ function CalibratePage() {
   const filtered = catFilter === "ALL" ? leaves : leaves.filter((l) => l.category === catFilter);
   const current: AnyLeaf | undefined = filtered[idx];
   const trainedNames = new Set(existing.map((e) => e.item_name));
+  // keep refs in sync
+  currentRef.current = current;
+  saveFn.current = (entry) => save.mutate(entry);
 
   // reset on item change
   useEffect(() => {
@@ -78,13 +84,17 @@ function CalibratePage() {
         const text = full.trim();
         setFinalText(text);
         setMicOn(false);
-        // run match
-        if (text && leaves.length) {
+        if (text && leaves.length && currentRef.current) {
           const flatLeaves = leaves.map((l) => ({ path: l.path, fullName: l.fullName }));
           const top = findTopMatches(text, flatLeaves, 1);
           const matchedName = top[0]?.fullName ?? null;
           const score = top[0]?.score ?? 0;
-          setAttempts((prev) => [...prev, { raw: text, matchedName, score }]);
+          const isMatch = matchedName === currentRef.current.fullName;
+          // auto-save every correct match — builds pronunciation dataset
+          if (isMatch) {
+            saveFn.current({ item_name: currentRef.current.fullName, category: currentRef.current.category, raw_text: text });
+          }
+          setAttempts((prev) => [...prev, { raw: text, matchedName, score, saved: isMatch }]);
         }
       }
     };
@@ -98,7 +108,12 @@ function CalibratePage() {
     save.mutate(
       { item_name: current.fullName, category: current.category, raw_text: attempt.raw },
       {
-        onSuccess: () => toast.success("Saved pronunciation!"),
+        onSuccess: () => {
+          toast.success("Saved pronunciation!");
+          setAttempts((prev) =>
+            prev.map((a) => a.raw === attempt.raw ? { ...a, saved: true } : a)
+          );
+        },
         onError: () => toast.error("Save failed"),
       }
     );
@@ -212,11 +227,11 @@ function CalibratePage() {
                   : "bg-orange-50 border-orange-200 dark:bg-orange-950/30"
               }`}>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="space-y-0.5">
+                  <div className="space-y-0.5 flex-1 min-w-0">
                     <div className="text-xs text-muted-foreground">Matched →</div>
-                    <div className="font-semibold text-sm">{latest.matchedName ?? "No match"}</div>
+                    <div className="font-semibold text-sm truncate">{latest.matchedName ?? "No match"}</div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex flex-col items-end gap-1 shrink-0">
                     <span className={`text-lg font-bold ${
                       pctScore >= 80 ? "text-emerald-600" : pctScore >= 50 ? "text-amber-600" : "text-red-500"
                     }`}>{pctScore}%</span>
@@ -226,57 +241,74 @@ function CalibratePage() {
                     }
                   </div>
                 </div>
-                {isMatch && (
-                  <Button size="sm" className="mt-3 w-full" onClick={() => handleSaveAttempt(latest)} disabled={save.isPending}>
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                    {save.isPending ? "Saving…" : "Save this pronunciation"}
-                  </Button>
+                {isMatch && latest.saved && (
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Auto-saved pronunciation
+                  </div>
                 )}
                 {!isMatch && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Wrong match — try again or speak more clearly.
-                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      Wrong match — try again, or force-save if you know it's right.
+                    </p>
+                    <Button size="sm" variant="outline" onClick={() => handleSaveAttempt(latest)} disabled={save.isPending} className="shrink-0 text-xs h-7">
+                      Force save
+                    </Button>
+                  </div>
                 )}
               </div>
             );
           })()}
 
           {/* Attempt history */}
-          {attempts.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                All attempts ({attempts.length})
+          {attempts.length > 0 && (() => {
+            const savedCount = attempts.filter((a) => a.saved).length;
+            const totalSaved = existing.filter((e) => e.item_name === current.fullName).length + savedCount;
+            return (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Attempts ({attempts.length})
+                  </div>
+                  <div className="text-xs text-emerald-700 font-semibold">
+                    {totalSaved} pronunciation{totalSaved !== 1 ? "s" : ""} saved
+                  </div>
+                </div>
+                <div className="space-y-1 max-h-44 overflow-y-auto">
+                  {[...attempts].reverse().map((a, i) => {
+                    const isMatch = a.matchedName === current.fullName;
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border ${
+                          a.saved
+                            ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20"
+                            : isMatch
+                            ? "bg-emerald-50/50 border-emerald-100"
+                            : "bg-muted border-transparent"
+                        }`}
+                      >
+                        <span className="truncate flex-1 font-medium">"{a.raw}"</span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {Math.round(a.score * 100)}%
+                        </span>
+                        {a.saved ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                        ) : (
+                          <button
+                            onClick={() => handleSaveAttempt(a)}
+                            className="shrink-0 text-xs text-muted-foreground hover:text-foreground border rounded px-1.5 py-0.5"
+                          >
+                            Save
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="space-y-1 max-h-40 overflow-y-auto">
-                {[...attempts].reverse().map((a, i) => {
-                  const isMatch = a.matchedName === current.fullName;
-                  return (
-                    <div
-                      key={i}
-                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm border ${
-                        isMatch
-                          ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20"
-                          : "bg-muted border-transparent"
-                      }`}
-                    >
-                      <span className="truncate flex-1 font-medium">"{a.raw}"</span>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        → {a.matchedName ?? "none"} ({Math.round(a.score * 100)}%)
-                      </span>
-                      {isMatch && (
-                        <button
-                          onClick={() => handleSaveAttempt(a)}
-                          className="shrink-0 text-xs text-emerald-600 hover:underline font-medium"
-                        >
-                          Save
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Nav */}
           <div className="flex gap-2 pt-1">
