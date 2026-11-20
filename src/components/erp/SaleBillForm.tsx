@@ -596,7 +596,7 @@ export function SaleBillForm({
                     </label>
                     <div className="flex gap-2">
                       <VoiceSearchPicker
-                        options={customers.map((c) => ({ id: c.id, label: c.name, sub: c.phone ?? undefined }))}
+                        options={[{ id: "", label: "Walk-in customer" }, ...customers.map((c) => ({ id: c.id, label: c.name, sub: c.phone ?? undefined }))]}
                         value={customerId}
                         onChange={(id) => setCustomerId(id)}
                         placeholder={f.customer.required ? "Search customer…" : "Walk-in / search…"}
@@ -709,7 +709,7 @@ export function SaleBillForm({
                   </label>
                   <div className="flex gap-2">
                     <VoiceSearchPicker
-                      options={customers.map((c) => ({ id: c.id, label: c.name, sub: c.phone ?? undefined }))}
+                      options={[{ id: "", label: "Walk-in customer" }, ...customers.map((c) => ({ id: c.id, label: c.name, sub: c.phone ?? undefined }))]}
                       value={customerId}
                       onChange={(id) => setCustomerId(id)}
                       placeholder={f.customer.required ? "Search customer…" : "Walk-in / search…"}

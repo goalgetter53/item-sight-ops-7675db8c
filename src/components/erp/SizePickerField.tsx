@@ -13,6 +13,20 @@ function buildOptions(min: number, max: number, step: number): string[] {
   return out;
 }
 
+// Display label for a dimension value: whole numbers shown as-is;
+// fractional quarters shown with carpenter notation: ' = ¼, " = ½, "' = ¾.
+function dimLabel(val: string): string {
+  const n = Number(val);
+  if (!isFinite(n)) return val;
+  const whole = Math.floor(n);
+  const frac = Math.round((n - whole) * 4); // quarters
+  if (frac === 0) return String(whole);
+  if (frac === 1) return `${whole}'`;
+  if (frac === 2) return `${whole}"`;
+  if (frac === 3) return `${whole}"'`;
+  return val;
+}
+
 /**
  * Mobile-first searchable size picker. Taps open a bottom sheet with a search
  * box and big tap rows. Typing a value outside the list (e.g. 72.05) offers a
@@ -50,7 +64,7 @@ export function SizePickerField({
         onClick={() => setOpen(true)}
         className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
       >
-        <span className={value ? "text-foreground" : "text-muted-foreground"}>{value || placeholder}</span>
+        <span className={value ? "text-foreground" : "text-muted-foreground"}>{value ? dimLabel(value) : placeholder}</span>
         <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
       </button>
 
@@ -69,8 +83,8 @@ export function SizePickerField({
             />
             <CommandList className="max-h-[55vh]">
               {isCustom && (
-                <CommandItem value={trimmed} onSelect={() => pick(String(round2(Number(trimmed))))} className="py-3 text-base">
-                  Use “{trimmed}”
+                <CommandItem value={trimmed} onSelect={() => pick(String(round2(Number(trimmed))))} className=”py-3 text-base”>
+                  Use “{dimLabel(trimmed)}”
                 </CommandItem>
               )}
               <CommandEmpty>No match. Type a number to use a custom size.</CommandEmpty>
@@ -78,7 +92,7 @@ export function SizePickerField({
                 {options.map((o) => (
                   <CommandItem key={o} value={o} onSelect={() => pick(o)} className="py-3 text-base">
                     <Check className={`mr-2 h-4 w-4 ${value === o ? "opacity-100" : "opacity-0"}`} />
-                    {o}
+                    {dimLabel(o)}
                   </CommandItem>
                 ))}
               </CommandGroup>
