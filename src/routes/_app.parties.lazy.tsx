@@ -145,7 +145,7 @@ function Parties() {
 
       <Dialog open={deleting !== null} onOpenChange={(v) => !v && setDeleting(null)}>
         <DialogContent className="w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl">
-          <DialogTitle>Delete “{deleting?.name}”?</DialogTitle>
+          <DialogTitle>Delete "{deleting?.name}"?</DialogTitle>
           <p className="text-sm text-slate-500">This permanently removes the {kind}. It can’t be undone. A {kind} with bills can’t be deleted.</p>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => setDeleting(null)} disabled={busy}>Cancel</Button>

@@ -191,7 +191,7 @@ function Inventory2() {
       {/* Delete confirm */}
       <Dialog open={deleting !== null} onOpenChange={(v) => !v && setDeleting(null)}>
         <DialogContent className="w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl">
-          <DialogTitle>Delete “{deleting?.name}”?</DialogTitle>
+          <DialogTitle>Delete "{deleting?.name}"?</DialogTitle>
           <p className="text-sm text-slate-500">
             This removes it and everything nested inside it. This can’t be undone.
           </p>

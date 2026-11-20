@@ -83,7 +83,7 @@ export function SizePickerField({
             />
             <CommandList className="max-h-[55vh]">
               {isCustom && (
-                <CommandItem value={trimmed} onSelect={() => pick(String(round2(Number(trimmed))))} className=”py-3 text-base”>
+                <CommandItem value={trimmed} onSelect={() => pick(String(round2(Number(trimmed))))} className="py-3 text-base">
                   Use &quot;{dimLabel(trimmed)}&quot;
                 </CommandItem>
               )}
