@@ -135,7 +135,7 @@ function PrintBill() {
               {items.map((it) => (
                 <tr key={it.id}>
                   <td>
-                    <div className="item-name">{it.products?.name ?? "Item"}</div>
+                    <div className="item-name">{it.name || it.products?.name || "Item"}</div>
                     {it.item_instance_id && <div className="item-hsn">{it.item_instance_id}</div>}
                   </td>
                   <td>{it.products?.hsn ?? "—"}</td>

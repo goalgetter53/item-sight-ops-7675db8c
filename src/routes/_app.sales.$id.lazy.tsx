@@ -63,7 +63,7 @@ function SaleDetail() {
       const pdf = buildInvoicePdf({
         shop, sale: s, customer: s.customers,
         items: items.map((it) => ({
-          name: it.products?.name ?? "Item", hsn: it.products?.hsn,
+          name: it.name || it.products?.name || "Item", hsn: it.products?.hsn,
           qty: it.qty, rate: it.rate, gst_rate: it.gst_rate,
           line_total: it.line_total, item_instance_id: it.item_instance_id,
         })),
@@ -93,7 +93,7 @@ function SaleDetail() {
           <Button variant="outline" className="h-11 gap-2" onClick={() => printThermalReceipt({
             shop,
             sale: s,
-            items: items.map((it) => ({ name: it.products?.name ?? "Item", qty: it.qty, rate: it.rate, line_total: it.line_total })),
+            items: items.map((it) => ({ name: it.name || it.products?.name || "Item", qty: it.qty, rate: it.rate, line_total: it.line_total })),
           })}><ReceiptText className="h-4 w-4" />Thermal</Button>
           <Button className="h-11 gap-2" onClick={() => window.print()}><Printer className="h-4 w-4" />Print</Button>
           {isAdmin && !s?.deleted_at && (
@@ -153,7 +153,7 @@ function SaleDetail() {
                 {items.map((it, i) => (
                   <tr key={it.id} className={i % 2 ? "bg-muted/30" : ""}>
                     <td className="p-3">
-                      <div className="font-semibold">{it.products?.name}</div>
+                      <div className="font-semibold">{it.name || it.products?.name}</div>
                       {it.item_instance_id && <div className="font-mono text-[10px] text-muted-foreground">{it.item_instance_id}</div>}
                     </td>
                     <td className="p-3">{it.products?.hsn ?? "—"}</td>

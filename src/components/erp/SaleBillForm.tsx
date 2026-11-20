@@ -546,6 +546,7 @@ export function SaleBillForm({
     setBusy(false);
     try { sessionStorage.removeItem(storageKey); } catch {}
     onSaved(tabId);
+    window.open(`/print-bill/${saleId}`, "_blank");
   };
   const save = () => finalize(false);
   const saveAndWhatsApp = () => finalize(true);
