@@ -6,7 +6,7 @@ export type HardwareLeaf = { path: InvNode[]; fullName: string };
 // Comprehensive Indian pronunciation variants (Hindi, Punjabi, Hinglish)
 const HINDI_NUMS: Record<string, string> = {
   // 1
-  ek: "1", ik: "1", ikk: "1", one: "1",
+  ek: "1", ekk: "1", ik: "1", ikk: "1", one: "1",
   // 2
   do: "2", doh: "2", two: "2",
   // 3
@@ -86,20 +86,28 @@ const SYNONYMS: Array<[RegExp, string]> = [
   [/\bkil\b/g, "nail"],
   [/\bkiil\b/g, "nail"],
   [/\bneel\b/g, "nail"],
+  [/\bneeel\b/g, "nail"],   // triple-e STT garble
+  [/\bnale\b/g, "nail"],    // common pronunciation variant
 
   // Screw / Pech
+  [/\bpec\b/g, "screw"],
   [/\bpech\b/g, "screw"],
   [/\bpetch\b/g, "screw"],
-  [/\bpetch\b/g, "screw"],
+  [/\bpechu\b/g, "screw"],   // South Indian 'u' suffix on pech
   [/\biscrew\b/g, "screw"],
   [/\bskru\b/g, "screw"],
+  [/\bskrew\b/g, "screw"],   // STT garble
+  [/\bscroo\b/g, "screw"],   // STT garble
+  [/\bscrewu\b/g, "screw"],
 
   // Hinge
-  [/\bhinj\b/g, "hinge"],
-  [/\bhinja\b/g, "hinge"],
+  [/\bhinj[ao]*a*\b/g, "hinge"],       // hinj, hinja, hinjaaa, hinjo
   [/\bhinge\b/g, "hinge"],
   [/\bkabja\b/g, "hinge"],
   [/\bkabza\b/g, "hinge"],
+  [/\bkabzaa\b/g, "hinge"],
+  [/\bkabjaa\b/g, "hinge"],
+  [/\bkbja\b/g, "hinge"],              // short STT truncation
 
   // Handle
   [/\bhendal\b/g, "handle"],
@@ -108,7 +116,8 @@ const SYNONYMS: Array<[RegExp, string]> = [
   [/\bhandil\b/g, "handle"],
 
   // Latch / Kundi / Khunda
-  [/\bkundi\b/g, "latch"],
+  [/\bkund(?:i+a*|ee|aa|e)\b/g, "latch"],
+  [/\bkndi\b/g, "latch"],
   [/\bkhunda\b/g, "latch"],
   [/\bkunda\b/g, "latch"],
   [/\blech\b/g, "latch"],
@@ -130,6 +139,13 @@ const SYNONYMS: Array<[RegExp, string]> = [
   [/\btroley\b/g, "trolly"],
   [/\btroli\b/g, "trolly"],
   [/\btrole\b/g, "trolly"],
+  [/\btrolee\b/g, "trolly"],
+  [/\btrolli\b/g, "trolly"],
+  [/\btrulee\b/g, "trolly"],
+  [/\btrawli\b/g, "trolly"],
+  [/\btrawlee\b/g, "trolly"],
+  [/\bthroli\b/g, "trolly"],
+  [/\bthrolee\b/g, "trolly"],
   [/\bwheel\b/g, "wheel"],
   [/\bvheel\b/g, "wheel"],
 
@@ -144,19 +160,26 @@ const SYNONYMS: Array<[RegExp, string]> = [
   [/\bhuk\b/g, "hook"],
 
   // Magnet / catch
-  [/\bmagnit\b/g, "magnet"],
+  [/\bmagni?ta*\b/g, "magnet"],    // magnit, magnitaa, magnita
   [/\bmeganet\b/g, "magnet"],
   [/\bkap\b/g, "cap"],         // cup/cap catch
 
-  // Sandpaper
+  // Sandpaper / reti and abrasive variants
   [/\bsandpepar\b/g, "sandpaper"],
   [/\bsand paper\b/g, "sandpaper"],
   [/\breti\b/g, "sandpaper"],
+  [/\bret[ei]{1,2}\b/g, "sandpaper"],   // retee, retii, retei
+  [/\breeti\b/g, "sandpaper"],           // reeti
+  [/\babrasive\b/g, "sandpaper"],        // abrasive paper
 
   // Fevicol / adhesive
   [/\bfewikol\b/g, "fevicol"],
   [/\bfevikol\b/g, "fevicol"],
   [/\bfabikol\b/g, "fevicol"],
+
+  // Weight units
+  [/\bkilograms?\b/g, "kg"],
+  [/\bkilo\b/g, "kg"],
 
   // Washer
   [/\bvosar\b/g, "washer"],
@@ -166,6 +189,7 @@ const SYNONYMS: Array<[RegExp, string]> = [
   // Nut / Nat
   [/\bnat\b/g, "nut"],
   [/\bnaath\b/g, "nut"],
+  [/\bnatt\b/g, "nut"],
 
   // Plastic / rubber
   [/\bplastic\b/g, "plastic"],
@@ -178,9 +202,12 @@ const SYNONYMS: Array<[RegExp, string]> = [
   [/\bkorbi\b/g, "corby"],
 
   // Hammer / Hathoda
-  [/\bhathoda\b/g, "hammer"],
-  [/\bhatoda\b/g, "hammer"],
+  [/\bhatho?da+\b/g, "hammer"],
+  [/\bhaatho?da+\b/g, "hammer"],
+  [/\bhatoda+\b/g, "hammer"],
   [/\bhathaura\b/g, "hammer"],
+  [/\bhathori\b/g, "hammer"],
+  [/\bhamar\b/g, "hammer"],
 
   // Chisel / Chori
   [/\bchoree\b/g, "chisel"],
@@ -223,14 +250,28 @@ const SYNONYMS: Array<[RegExp, string]> = [
   [/\bkorby\b/g, "corby"],
   [/\bcorbi\b/g, "corby"],
 
-  // Perporated — inventory misspelling; normalize both sides so "perforated" matches
+  // Perforated — normalize variants and map perforated mesh combos to jali
   [/\bperporated\b/g, "perforated"],
   [/\bparphorated\b/g, "perforated"],
-  [/\bperforated\b/g, "perforated"],
+  [/\bporphorated\b/g, "perforated"],
+  [/\bperfora+ted\b/g, "perforated"],    // also "perforaated"
+  [/\bperforated\s+(?:wire\s+)?mesh\b/g, "jali sheet perforated"],
+  [/\b(?:wire\s+)?mesh\s+perforated\b/g, "jali sheet perforated"],
 
   // Fevicol — extra STT variants
   [/\bfewicol\b/g, "fevicol"],
   [/\bfevicoal\b/g, "fevicol"],
+
+  // Stainless steel — normalize "stainless"/"stainles"/"inox" to "ss"
+  [/\bstainless\b/g, "ss"],
+  [/\bstainles\b/g, "ss"],
+  [/\binox\b/g, "ss"],
+
+  // Hingess — fast-speech merged "hinge ss"
+  [/\bhingess\b/g, "hinge ss"],
+
+  // Drawer channel → drawer slide (workers say "channel" for drawer slide)
+  [/\bdrawer\s+channel\b/g, "drawer slide"],
 
   // BWP / MDF — spoken as letters, STT sometimes adds spaces
   [/\bb\s*w\s*p\b/g, "bwp"],
@@ -238,7 +279,34 @@ const SYNONYMS: Array<[RegExp, string]> = [
 
   // Auto close / auto hings variants
   [/\bauto\s*hing\b/g, "auto hings"],
+  [/\bauto\s+hinge\b/g, "auto hings"],
   [/\bauto\s*hinges\b/g, "auto hings"],
+
+  // Auto-close hinge — "auto close", "self close", "khud band" → Door Hinges Auto signal
+  [/\bauto\s*close\b/g, "auto hings"],
+  [/\bself\s*close\b/g, "auto hings"],
+  [/\bkhud\s*band\w*\b/g, "auto hings"],    // khud bandu, khud bandlaa
+  [/\bauto\s*band\w*\b/g, "auto hings"],    // auto bandlaa, auto bandu
+  [/\bband\s*hone\s*wala\b/g, "auto hings"],
+  [/\bhinge\s+auto\b/g, "auto hings"],
+  // STT-merged/garbled "auto hings" forms
+  [/\botohings?\b/g, "auto hings"],
+  [/\bautohings?\b/g, "auto hings"],
+  [/\bautohinge\b/g, "auto hings"],
+  [/\botohinge\b/g, "auto hings"],
+  [/\boto\s+hings?\b/g, "auto hings"],
+  [/\boto\s+hinges?\b/g, "auto hings"],
+  [/\baato\b/g, "auto"],
+
+  // More Corby STT variants (Indian accent garbles of "Corby")
+  [/\bkarby\b/g, "corby"],
+  [/\bcawrby\b/g, "corby"],
+  [/\bkaurby\b/g, "corby"],
+  [/\bkorbe\b/g, "corby"],
+
+  // Hinge SS — "ss" with hinge variants
+  [/\bkabja\s+ss\b/g, "hinge ss"],
+  [/\bkabza\s+ss\b/g, "hinge ss"],
 ];
 
 // ─── Phonetic normalization ───────────────────────────────────────────────────
@@ -292,6 +360,15 @@ function expandFractionSingles(s: string): string {
     .replace(/\bdhai\b/g, "2.5")
     .replace(/\bdhaai\b/g, "2.5")
     .replace(/\bdhaa\b/g, "2.5")
+    // Compound "N and a half" — must come before individual aadha/ek rules
+    .replace(/\bek\s+aadha?\b/g, "1.5")
+    .replace(/\bek\s+aadhi\b/g, "1.5")
+    .replace(/\bdo\s+aadha?\b/g, "2.5")
+    .replace(/\bdo\s+aadhi\b/g, "2.5")
+    .replace(/\bteen\s+aadha?\b/g, "3.5")
+    .replace(/\bteen\s+aadhi\b/g, "3.5")
+    .replace(/\bchaa?r\s+aadha?\b/g, "4.5")
+    .replace(/\bchaa?r\s+aadhi\b/g, "4.5")
     // half
     .replace(/\baadha\b/g, "0.5")
     .replace(/\baadhi\b/g, "0.5")
@@ -345,14 +422,27 @@ const TELUGU_SUFFIX_RE = /\b(\w{5,})(thi|ki|ku|laa|lee)\b/g;
 
 export function preprocess(raw: string): string {
   let s = raw.toLowerCase().trim();
+  // 0init. Strip STT artifacts: non-alphanumeric/space chars (quotes, dashes, etc.) — keep "." for decimals
+  s = s.replace(/[^a-z0-9. ]/g, " ");
   // 0pre. Split digit+unit: "18mm" → "18 mm", "12kg" → "12 kg"
   s = s.replace(/(\d+)(mm|cm|kg|inch|inchi|inchee)/g, "$1 $2");
+  // 0pre2. Split letter→digit boundary: "petch1" → "petch 1", "m4" → "m 4"
+  s = s.replace(/([a-z])(\d)/g, "$1 $2");
   // 0. Strip Telugu/Kannada postposition suffixes: "trollythi" → "trolly", "fevicolki" → "fevicol"
   s = s.replace(TELUGU_SUFFIX_RE, "$1");
   // 0b. Split Hindi-num merged with unit: "barahmm" → "bara mm", "athrainch" → "athra inch"
   s = s.replace(HINDI_NUM_PREFIX_RE, "$1 $2");
   // 0c. Strip common filler words
-  s = s.replace(/\b(chahiye|lao|lana|dena|wala|wali|ka|ki|ke|hai|tha|mujhe|please|aur|bhaiya|bhai|yaar|boss|sir)\b/g, "");
+  s = s.replace(/\b(chahiye|lao|lana|dena|wala|wali|ka|ki|ke|hai|tha|mujhe|please|aur|bhaiya|bhai|yaar|boss|sir|baar|dedo|diyo|dijiye|lo|sun|bata|leke|piece|type|suno|dekho|milega|kya|nahi|hoga|available|na|toh|bas|ruko|haan|ok|theek|theekhai|oye|de)\b/g, "");
+  // 0d. English compound numbers not in HINDI_NUMS (spoken as one merged word)
+  s = s.replace(/\btwentyfour\b/g, "24");
+  s = s.replace(/\btwentyone\b/g, "21");
+  s = s.replace(/\btwentytwo\b/g, "22");
+  s = s.replace(/\btwentythree\b/g, "23");
+  s = s.replace(/\btwentyfive\b/g, "25");
+  s = s.replace(/\btwenty\b/g, "20");
+  s = s.replace(/\bthirtyone\b/g, "31");
+  s = s.replace(/\bthirty\b/g, "30");
   // 1. Normalize dimension separators: "8*4" → "8 4", "8×4" → "8 4", digit-x-digit
   s = s.replace(/(\d+)\s*[*×]\s*(\d+)/g, "$1 $2");
   s = s.replace(/\b(\d+)\s*x\s*(\d+)\b/g, "$1 $2");
@@ -361,6 +451,27 @@ export function preprocess(raw: string): string {
   s = s.replace(
     /\b(ek|ikk?|do|doh|teen|tin|char|chaar|chhar|paanch?|panch|chhe|saat?h?|aath?|aat|nau|das|gyara[h]?|bara[h]?|tera[h]?|choda|pandra[h]?|dedh|dhai|aadha?|sawa|saadhe?|paune?)inch[ie]*/g,
     "$1 inch"
+  );
+  // 2ab. Split merged size-word compounds: "birangeechaarinch" → "birangee chaar inch"
+  //     Handles fast-speech where brand + size + unit run together without spaces
+  s = s.replace(
+    /([a-z]{4,}?)(chaar|chhar|char|teen|tin|tiin|chhe|chhah|four|three|six|two|five|one)(inch[ie]*)/g,
+    "$1 $2 $3"
+  );
+  // Also split brand+number at end (no "inch"): "birangeechaar" → "birangee chaar"
+  s = s.replace(
+    /([a-z]{5,})(chaar|chhar|char|teen|tiin|chhe|chhah)\b/g,
+    "$1 $2"
+  );
+  // Split handle+English-number: "birangyhandlesix" → "birangy handle six"
+  s = s.replace(
+    /([a-z]{4,}?)(handle|handel|hendal|handal|handil)(six|seven|eight|four|three|two|five|nine|ten|one)\b/g,
+    "$1 $2 $3"
+  );
+  // 2ac. Split Hindi-num embedded in merged word before inch: "pechekinch"→"pech ek inch", "petchdedhinch"→"petch dedh inch"
+  s = s.replace(
+    /([a-z]{3,}?)(dedh|daid|dhai|dhaai|chaar|chhar|char|teen|tin|tiin|paanch|panch|chhe|saat|aath|aat|nau|das|ek|ikk?|do|doh)(inch[ie]*)/g,
+    "$1 $2 $3"
   );
   // 2aa. Split merged ply-dimension compounds (workers say sheet size as one word)
   //   "saccha"/"sacha"/"satcha" = saat+char = 7 4
@@ -383,13 +494,43 @@ export function preprocess(raw: string): string {
   s = s.replace(/\baat\s*te+n\b/g, "8 3");
   // 2b. Single-word fractions (dedh, dhai, aadha, paav…) before number-word map
   s = expandFractionSingles(s);
+  // 2c. "N in" abbreviation → "N inch" (workers say "daid in" = "1.5 inch")
+  s = s.replace(/(\d+(?:\.\d+)?)\s+\bin\b(?!ch)/g, "$1 inch");
+  // 2d. Split Fevicol merged fast-speech: "fevicoalekkilogram" → "fevicoal ek kilogram"
+  //     Also handles "fewicol" (w/v STT confusion) and longer merged prefixes up to 12 chars
+  s = s.replace(
+    /\b(fe[vw][a-z]{0,10}?)(sh)?(bees|chaubees|pachees|chaar|chhar|char|paanch|panch|teen|tin|das|nau|aath|aat|saat|chhe|ek|ikk?|do|doh)(kilo(?:gram)?|gram)\b/g,
+    (_, pre, sh, num, unit) => sh ? `${pre} sh ${num} ${unit}` : `${pre} ${num} ${unit}`
+  );
   // 3. Hindi number words → digits
   s = replaceHindiNums(s);
+  // 3b. Collapse Hindi hundreds compound: "1 100 20" → "120", "100 80" → "180"
+  s = s.replace(/\b(\d)\s+100\s+(\d{1,2})\b/g, (_, h, t) => String(parseInt(h) * 100 + parseInt(t)));
+  s = s.replace(/\b100\s+(\d{1,2})\b/g, (_, t) => String(100 + parseInt(t)));
+  // 3c. "N in" → "N inch" (digit + standalone "in" abbreviation, e.g. "chaar in birangee")
+  s = s.replace(/\b(\d+)\s+in\b/g, "$1 inch");
   // 4. Multi-word fraction combos (sawa 2 → 2.25, saadhe 3 → 3.5, paune 4 → 3.75)
   s = expandFractionCombos(s);
   // 5. Synonyms + dimension code splits
   s = applySynonyms(s);
   s = expandDimCodes(s);
+  // 5b. Default Fevicol grade to SH when no grade specified
+  if (/\bfevicol\b/.test(s) && !/\b(sh|mr)\b/.test(s)) {
+    s = s.replace(/\bfevicol\b/g, "fevicol sh");
+  }
+  s = s.trim().replace(/\s+/g, " ");
+  // 5c. Strip leading quantity: "4 screw 1 inch" → "screw 1 inch"
+  //     Case A: leading digit NOT followed by unit, AND string has a num+unit pair later.
+  if (
+    /\b\d+(?:\.\d+)?\s+(?:inch|mm|cm|kg|grit)\b/.test(s) &&
+    /^\d+\s+(?!(?:inch|mm|cm|kg|grit)\b)/.test(s)
+  ) {
+    s = s.replace(/^\d+\s+/, "");
+  }
+  // 5d. Strip trailing lone single-digit when string has a num+unit pair (quantity noise)
+  if (/\b\d+(?:\.\d+)?\s+(?:inch|mm|cm|kg|grit)\b/.test(s)) {
+    s = s.replace(/\s+\d\s*$/, "");
+  }
   return s;
 }
 
@@ -436,16 +577,19 @@ function scoreOne(queryRaw: string, candidateRaw: string): number {
     if (q === c) return 1.0;
     const qW = q.split(" ").filter(Boolean);
     const cW = c.split(" ").filter(Boolean);
-    const allClose = qW.length > 0 && qW.every((w) =>
+    // Filter pure-digit tokens (quantity particles like "ek"→"1") before allClose check
+    // so a stray quantity number doesn't block allClose from firing for the item type.
+    const qWNonDigit = qW.filter(w => !/^\d+(\.\d+)?$/.test(w));
+    const allClose = qWNonDigit.length > 0 && qWNonDigit.every((w) =>
       cW.some((cw) => cw === w || jaroWinkler(w, cw) > 0.80)
     );
     let score = allClose ? 0.85 + jaroWinkler(q, c) * 0.1 : jaroWinkler(q, c);
     // Digit-token tiebreak: single-digit tokens (dimensions like "7","8","3","4")
     // must match exactly. Mismatch penalty > boost so wrong digit loses.
-    const qDigits = qW.filter(w => /^\d{1,2}$/.test(w));
+    const qDigits = qW.filter(w => /^\d+(\.\d+)?$/.test(w));
     for (const d of qDigits) {
       const cHasExact = cW.includes(d);
-      const cHasDiff  = cW.some(cw => /^\d{1,2}$/.test(cw) && cw !== d);
+      const cHasDiff  = cW.some(cw => /^\d+(\.\d+)?$/.test(cw) && cw !== d);
       if (cHasExact) score += 0.01;
       if (cHasDiff)  score -= 0.02;  // stronger penalty than boost
     }
