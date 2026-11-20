@@ -1,11 +1,11 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ChevronRight, Home, Pencil, Trash2, Plus } from "lucide-react";
+import { Camera, ChevronRight, Home, Pencil, Trash2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useComboStockList } from "@/lib/comboStock";
 import { StockBadge, StockDetail } from "@/components/erp/Inventory2Stock";
@@ -40,25 +40,61 @@ function Inventory2() {
   const [deleting, setDeleting] = useState<Node | null>(null);
   const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imgPreview, setImgPreview] = useState<string | null>(null);
+  const [imgFile, setImgFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["inventory-nodes", parentId] });
 
-  const openAdd = () => { setName(""); setImageUrl(""); setEditing({}); };
-  const openEdit = (n: Node) => { setName(n.name); setImageUrl(n.image_url ?? ""); setEditing({ node: n }); };
+  const openAdd = () => { setName(""); setImageUrl(""); setImgPreview(null); setImgFile(null); setEditing({}); };
+  const openEdit = (n: Node) => {
+    setName(n.name); setImageUrl(n.image_url ?? "");
+    setImgPreview(n.image_url ?? null); setImgFile(null);
+    setEditing({ node: n });
+  };
+
+  const handleImgFile = (file: File) => {
+    setImgFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setImgPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const save = async () => {
     const nm = name.trim();
     if (!nm) { toast.error("Name is required"); return; }
     setBusy(true);
-    const payload = { name: nm, image_url: imageUrl.trim() || null };
-    const res = editing?.node
-      ? await supabase.from("inventory_nodes").update(payload).eq("id", editing.node.id)
-      : await supabase.from("inventory_nodes").insert({ ...payload, parent_id: parentId });
+    try {
+      let finalUrl = imageUrl.trim() || null;
+
+      if (imgFile) {
+        const ext = imgFile.name.split(".").pop() ?? "jpg";
+        const nodeId = editing?.node?.id ?? crypto.randomUUID();
+        const path = `node-${nodeId}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("product-images")
+          .upload(path, imgFile, { upsert: true, contentType: imgFile.type });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+        finalUrl = urlData.publicUrl;
+      }
+
+      const payload = { name: nm, image_url: finalUrl };
+      const res = editing?.node
+        ? await supabase.from("inventory_nodes").update(payload).eq("id", editing.node.id)
+        : await supabase.from("inventory_nodes").insert({ ...payload, parent_id: parentId });
+      if (res.error) throw res.error;
+    } catch (err: any) {
+      setBusy(false);
+      toast.error(err.message ?? "Save failed");
+      return;
+    }
     setBusy(false);
-    if (res.error) { toast.error(res.error.message); return; }
     toast.success(editing?.node ? "Updated" : "Added");
     setEditing(null);
+    setImgFile(null); setImgPreview(null);
     refresh();
   };
 
@@ -166,6 +202,12 @@ function Inventory2() {
         {!isLoading && nodes.length === 0 && <StockDetail comboStock={comboStock} path={path} />}
       </div>
 
+      {/* Hidden file inputs for camera/gallery */}
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImgFile(f); e.target.value = ""; }} />
+      <input ref={galleryRef} type="file" accept="image/*" className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImgFile(f); e.target.value = ""; }} />
+
       {/* Add / Edit dialog */}
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent className="w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl">
@@ -176,10 +218,40 @@ function Inventory2() {
               <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. 18 mm"
                 onKeyDown={(e) => { if (e.key === "Enter") save(); }} />
             </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-slate-700">Image URL <span className="font-normal text-slate-400">(optional)</span></span>
-              <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
-            </label>
+
+            {/* Photo section */}
+            <div>
+              <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                Photo <span className="font-normal text-slate-400">(optional)</span>
+              </span>
+              <div className="flex items-center gap-3">
+                {imgPreview ? (
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200">
+                    <img src={imgPreview} alt="preview" className="h-full w-full object-cover" />
+                    {imgFile && (
+                      <button type="button" onClick={() => { setImgFile(null); setImgPreview(editing?.node?.image_url ?? null); }}
+                        className="absolute -right-1 -top-1 rounded-full bg-white p-0.5 shadow">
+                        <X className="h-3 w-3 text-slate-500" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-300">
+                    <Camera className="h-6 w-6" />
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col gap-2">
+                  <button type="button" onClick={() => cameraRef.current?.click()}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:scale-95">
+                    <Camera className="h-4 w-4" /> Take Photo
+                  </button>
+                  <button type="button" onClick={() => galleryRef.current?.click()}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:scale-95">
+                    Choose from Gallery
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => setEditing(null)} disabled={busy}>Cancel</Button>
