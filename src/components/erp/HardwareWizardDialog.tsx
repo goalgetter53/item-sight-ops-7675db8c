@@ -68,14 +68,16 @@ export function HardwareWizardDialog({
   onOpenChange,
   onAdd,
   initialPath,
+  defaultPhase = "browse",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onAdd: (item: Added) => void;
   initialPath?: InvNode[];
+  defaultPhase?: "voice" | "browse";
 }) {
   const [path, setPath] = useState<InvNode[]>([]);
-  const [phase, setPhase] = useState<"voice" | "browse" | "matches" | "dims" | "amount" | "qty" | "disc">("voice");
+  const [phase, setPhase] = useState<"voice" | "browse" | "matches" | "dims" | "amount" | "qty" | "disc">(defaultPhase);
   const [matches, setMatches] = useState<Array<HardwareLeaf & { score: number }>>([]);
   const [length, setLength] = useState("");
   const [breadth, setBreadth] = useState("");
@@ -111,7 +113,7 @@ export function HardwareWizardDialog({
     if (initialPath?.length) {
       setPath(initialPath); setPhase("dims");
     } else {
-      setPath([]); setPhase("voice");
+      setPath([]); setPhase(defaultPhase);
     }
     setMatches([]);
     setLength(""); setBreadth(""); setAmount(""); setQty("1"); setDiscMode("pct"); setDisc("");
@@ -128,8 +130,9 @@ export function HardwareWizardDialog({
 
   const pick = (n: InvNode) => setPath((p) => [...p, n]);
   const back = () => {
-    if (phase === "matches") { setPhase("voice"); return; }
-    if (phase === "browse" && path.length === 0) { setPhase("voice"); return; }
+    if (phase === "matches") { setPhase(defaultPhase); return; }
+    if (phase === "voice") { setPhase("browse"); return; }
+    if (phase === "browse" && path.length === 0) { setPhase(defaultPhase); return; }
     if (phase === "dims") { setPath((p) => p.slice(0, -1)); setPhase("browse"); return; }
     if (phase === "amount") { setPhase("dims"); return; }
     if (phase === "qty") { setPhase("amount"); return; }
@@ -255,18 +258,24 @@ export function HardwareWizardDialog({
 
           {/* ── Browse phase ── */}
           {phase === "browse" && (
-            <div className="grid grid-cols-2 gap-3">
-              {isLoading ? (
-                <p className="col-span-2 py-6 text-center text-sm text-slate-400">Loading…</p>
-              ) : children.length === 0 ? (
-                <p className="col-span-2 py-6 text-center text-sm text-slate-400">Nothing here — add items in Inventory 2 → HARDWARE.</p>
-              ) : children.map((n) => (
-                <button key={n.id} type="button" onClick={() => pick(n)}
-                  className="flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-5 text-left text-base font-bold text-slate-700 shadow-sm transition-all min-h-[64px] active:scale-[0.97] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]">
-                  <span className="truncate">{n.name}</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-                </button>
-              ))}
+            <div className="space-y-3">
+              <button type="button" onClick={() => setPhase("voice")}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-indigo-200 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 hover:bg-indigo-100 transition-colors">
+                <Mic className="h-4 w-4" /> Use voice search instead
+              </button>
+              <div className="grid grid-cols-2 gap-3">
+                {isLoading ? (
+                  <p className="col-span-2 py-6 text-center text-sm text-slate-400">Loading…</p>
+                ) : children.length === 0 ? (
+                  <p className="col-span-2 py-6 text-center text-sm text-slate-400">Nothing here — add items in Inventory 2 → HARDWARE.</p>
+                ) : children.map((n) => (
+                  <button key={n.id} type="button" onClick={() => pick(n)}
+                    className="flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-5 text-left text-base font-bold text-slate-700 shadow-sm transition-all min-h-[64px] active:scale-[0.97] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]">
+                    <span className="truncate">{n.name}</span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
