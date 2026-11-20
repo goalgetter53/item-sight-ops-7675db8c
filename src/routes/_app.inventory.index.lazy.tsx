@@ -1,5 +1,5 @@
 import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import {
   Package, Search, SlidersHorizontal,
   ArrowDownToLine, ArrowUpFromLine, History,
   ArrowUp, ArrowDown, ChevronsUpDown, ChevronRight, ChevronDown,
-  Pencil,
+  Pencil, Camera, X,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,6 +41,11 @@ function Inventory() {
   const [editQtyProduct, setEditQtyProduct] = useState<any>(null);
   const [editQtyValue, setEditQtyValue] = useState(0);
   const [editQtyBusy, setEditQtyBusy] = useState(false);
+  const [editImgPreview, setEditImgPreview] = useState<string | null>(null);
+  const [editImgFile, setEditImgFile] = useState<File | null>(null);
+  const [editImgUploading, setEditImgUploading] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const nav = useNavigate();
 
   const { data, isLoading: loading, refetch } = useQuery({
@@ -171,6 +176,13 @@ function Inventory() {
     setHistoryRows(h ?? []);
   };
 
+  const handleImageFile = (file: File) => {
+    setEditImgFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setEditImgPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const saveEditQty = async () => {
     if (!editQtyProduct) return;
     const current = counts[editQtyProduct.id] ?? 0;
@@ -206,10 +218,32 @@ function Inventory() {
           if (error) throw error;
         }
       }
+
+      // Upload image if one was selected
+      if (editImgFile) {
+        setEditImgUploading(true);
+        const ext = editImgFile.name.split(".").pop() ?? "jpg";
+        const path = `${editQtyProduct.id}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("product-images")
+          .upload(path, editImgFile, { upsert: true, contentType: editImgFile.type });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+        const { error: updErr } = await supabase
+          .from("products")
+          .update({ image_url: urlData.publicUrl })
+          .eq("id", editQtyProduct.id);
+        if (updErr) throw updErr;
+        setEditImgUploading(false);
+      }
+
       await refetch();
       setEditQtyOpen(false);
+      setEditImgFile(null);
+      setEditImgPreview(null);
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to update stock");
+      toast.error(e?.message ?? "Failed to update");
+      setEditImgUploading(false);
     } finally {
       setEditQtyBusy(false);
     }
@@ -330,8 +364,8 @@ function Inventory() {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              title="Edit quantity"
-              onClick={(e) => { e.stopPropagation(); setEditQtyProduct(p); setEditQtyValue(counts[p.id] ?? 0); setEditQtyOpen(true); }}
+              title="Edit item"
+              onClick={(e) => { e.stopPropagation(); setEditQtyProduct(p); setEditQtyValue(counts[p.id] ?? 0); setEditImgPreview(p.image_url ?? null); setEditImgFile(null); setEditQtyOpen(true); }}
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -564,16 +598,80 @@ function Inventory() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={editQtyOpen} onOpenChange={setEditQtyOpen}>
-        <DialogContent className="max-w-xs rounded-2xl">
+      {/* Hidden file inputs for image capture */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = ""; }}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = ""; }}
+      />
+
+      <Dialog open={editQtyOpen} onOpenChange={(v) => { setEditQtyOpen(v); if (!v) { setEditImgFile(null); setEditImgPreview(null); } }}>
+        <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Stock Quantity</DialogTitle>
+            <DialogTitle>Edit Item</DialogTitle>
           </DialogHeader>
           {editQtyProduct && (
-            <div className="space-y-4 pt-1">
+            <div className="space-y-5 pt-1">
               <div className="text-sm font-semibold text-slate-700">{editQtyProduct.name}</div>
-              <div className="text-xs text-slate-500">Current qty: <b>{counts[editQtyProduct.id] ?? 0}</b></div>
+
+              {/* Image section */}
               <div>
+                <div className="text-xs font-semibold text-slate-600 mb-2">Item Photo</div>
+                <div className="flex gap-3 items-start">
+                  <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 grid place-items-center">
+                    {editImgPreview ? (
+                      <>
+                        <img src={editImgPreview} alt="" className="object-cover w-full h-full" />
+                        {editImgFile && (
+                          <button
+                            type="button"
+                            onClick={() => { setEditImgFile(null); setEditImgPreview(editQtyProduct.image_url ?? null); }}
+                            className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/50 grid place-items-center"
+                          >
+                            <X className="h-3 w-3 text-white" />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <Package className="h-8 w-8 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2 h-9"
+                      onClick={() => cameraInputRef.current?.click()}
+                    >
+                      <Camera className="h-4 w-4" /> Take Photo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full gap-2 h-9 text-slate-500"
+                      onClick={() => galleryInputRef.current?.click()}
+                    >
+                      Choose from Gallery
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quantity section */}
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Current qty: <b>{counts[editQtyProduct.id] ?? 0}</b></div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">New quantity</label>
                 <Input
                   type="number"
@@ -581,12 +679,12 @@ function Inventory() {
                   value={editQtyValue}
                   onChange={(e) => setEditQtyValue(Math.max(0, Number(e.target.value)))}
                   className="h-10 text-base"
-                  autoFocus
                   onKeyDown={(e) => { if (e.key === "Enter") saveEditQty(); }}
                 />
               </div>
-              <Button className="w-full" onClick={saveEditQty} disabled={editQtyBusy}>
-                {editQtyBusy ? "Saving…" : "Save"}
+
+              <Button className="w-full" onClick={saveEditQty} disabled={editQtyBusy || editImgUploading}>
+                {editImgUploading ? "Uploading photo…" : editQtyBusy ? "Saving…" : "Save"}
               </Button>
             </div>
           )}
